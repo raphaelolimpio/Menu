@@ -84,7 +84,7 @@ export default function HomePage() {
               </span>
             </div>
           </div>
-        )}
+        )} 
 
         {/* Grade de Produtos */}
         {loading ? (
