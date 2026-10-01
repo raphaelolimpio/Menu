@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: catalog3d_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: catalog3d_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - catalog3d_net
+
+  adminer:
+    image: adminer:latest
+    container_name: catalog3d_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - catalog3d_net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  catalog3d_net:
+    driver: bridge
