@@ -49,7 +49,7 @@ export default function Navbar() {
 
   const isHidden = hiddenRoutes.some((route) => pathname?.startsWith(route));
 
-  if (isHidden) {
+  if (pathname === "/" || isHidden) {
     return null;
   }
 

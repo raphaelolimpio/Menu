@@ -1,37 +1,24 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Layers,
   Box,
   Smartphone,
-  ShieldCheck,
   ArrowRight,
-  Sparkles,
-  ShoppingBag,
-  Store,
-  ChevronRight,
   LogIn,
-  Eye,
-  CheckCircle2
+  UserPlus,
+  Palette,
+  BadgeCheck,
+  PackageCheck,
 } from "lucide-react";
 
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const storeParam = searchParams.get("store");
-
-  const [isLoadingSession, setIsLoadingSession] = useState(true);
-  const [activeFinish, setActiveFinish] = useState("#0f172a");
-
-  const demoFinishes = [
-    { label: "Grafite Industrial", color: "#0f172a" },
-    { label: "Dourado Nobre", color: "#d97706" },
-    { label: "Verde Esmeralda", color: "#059669" },
-    { label: "Alumínio Polido", color: "#64748b" },
-  ];
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -49,191 +36,169 @@ function HomeContent() {
       }
     }
 
-    setIsLoadingSession(false);
   }, [router, storeParam]);
 
-  if (isLoadingSession) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 animate-pulse mb-3">
-          <Layers className="w-6 h-6 animate-spin" />
-        </div>
-        <p className="text-xs font-mono text-slate-400">A carregar plataforma 3D...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
-      {/* CABEÇALHO */}
-      <header className="w-full max-w-7xl mx-auto px-5 sm:px-8 py-5 flex items-center justify-between border-b border-slate-900 sticky top-0 bg-slate-950/80 backdrop-blur-md z-40">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
-            <Layers className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-sm font-black tracking-wider uppercase text-white block leading-none">
-              Catálogo 3D
+    <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-100 selection:bg-emerald-400 selection:text-slate-950">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex min-h-11 items-center gap-3" aria-label="Catálogo 3D, página inicial">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+              <Layers className="h-5 w-5" />
             </span>
-            <span className="text-[10px] text-slate-500 font-mono tracking-widest font-semibold uppercase">
-              Portal Interativo & ERP
+            <span>
+              <span className="block text-sm font-extrabold tracking-tight text-white">Catálogo 3D</span>
+              <span className="block text-[11px] text-slate-400">Produtos em detalhe</span>
             </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Link
-            href="/cart"
-            className="p-2 sm:px-3 sm:py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center gap-1.5 text-xs font-semibold"
-            title="Ver Carrinho"
-          >
-            <ShoppingBag className="w-4 h-4 text-emerald-400" />
-            <span className="hidden sm:inline">Carrinho</span>
           </Link>
 
-          <Link
-            href="/login"
-            className="flex items-center gap-2 text-xs font-bold text-slate-200 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2.5 rounded-xl transition-all shadow-sm"
-          >
-            <LogIn className="w-4 h-4 text-emerald-400" />
-            <span>Aceder</span>
-          </Link>
+          <nav aria-label="Navegação principal" className="flex items-center gap-2">
+            <Link
+              href="/register"
+              className="flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/30 sm:px-4"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Criar conta</span>
+            </Link>
+            <Link
+              href="/login"
+              className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 text-sm font-bold text-white transition hover:border-emerald-300/30 hover:bg-white/10 sm:px-4"
+            >
+              <LogIn className="h-4 w-4 text-emerald-300" />
+              <span>Entrar</span>
+            </Link>
+          </nav>
         </div>
       </header>
 
-      {/* ÁREA PRINCIPAL */}
-      <main className="flex-1 max-w-7xl mx-auto px-5 sm:px-8 py-10 lg:py-16 flex flex-col lg:flex-row items-center justify-between gap-12">
-        <div className="flex-1 text-center lg:text-left space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Tecnologia 3D sem necessidade de instalar App</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12]">
-            Apresente os seus produtos em <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">3D Real</span> no telemóvel do cliente
-          </h1>
-
-          <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            Permita que clientes e revendedores girem, inspecionem acabamentos e emitam propostas completas com QR Code PIX e WhatsApp direto do navegador.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3.5 pt-2">
-            <Link
-              href="/register"
-              className="flex items-center justify-center gap-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider px-7 py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Store className="w-4 h-4" />
-              <span>Criar Conta da Minha Loja</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            <Link
-              href="/cart"
-              className="flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 font-bold text-xs px-6 py-4 rounded-xl transition-all"
-            >
-              <Eye className="w-4 h-4 text-slate-400" />
-              <span>Ver Demonstração do Carrinho</span>
-            </Link>
-          </div>
-
-          <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-left">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Modelos GLB Leves</span>
+      <main>
+        <section className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-16 lg:min-h-[620px] lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-20">
+          <div className="pointer-events-none absolute -left-40 top-10 h-80 w-80 rounded-full bg-emerald-500/10 blur-[100px]" />
+          <div className="relative">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/[0.08] px-3.5 py-2 text-sm font-semibold text-emerald-200">
+              <Smartphone className="h-4 w-4" />
+              Funciona direto no telemóvel
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Fecho via WhatsApp</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 col-span-2 sm:col-span-1">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Cobrança por PIX</span>
-            </div>
-          </div>
-        </div>
-
-        {/* LADO DIREITO */}
-        <div className="w-full max-w-md lg:max-w-lg flex flex-col gap-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-7 backdrop-blur-md relative overflow-hidden shadow-2xl">
-            <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
-              <div className="flex items-center gap-2.5">
-                <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                <span className="text-[11px] font-mono text-slate-500 ml-2">preview_interativo.glb</span>
-              </div>
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                Tempo Real
+            <h1 className="max-w-2xl text-[2.6rem] font-black leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.65rem]">
+              Veja cada detalhe.
+              <span className="mt-1 block bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent">
+                Escolha com confiança.
               </span>
-            </div>
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
+              Explore os produtos em 3D, experimente os acabamentos e monte o seu pedido — sem instalar nenhuma aplicação.
+            </p>
 
-            <div
-              className="w-full h-48 rounded-2xl border border-slate-800 flex flex-col items-center justify-center p-6 text-center transition-colors duration-500 relative overflow-hidden"
-              style={{
-                background: `radial-gradient(circle at center, ${activeFinish}33, #020617 80%)`
-              }}
-            >
-              <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-300 border border-white/10"
-                style={{ backgroundColor: activeFinish }}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a
+                href="#como-funciona"
+                className="flex min-h-14 items-center justify-center gap-2.5 rounded-2xl bg-emerald-400 px-6 text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/30"
               >
-                <Box className="w-10 h-10 text-white drop-shadow-md animate-pulse" />
-              </div>
-              <p className="text-xs font-semibold text-slate-300 mt-3">
-                Simulador de Textura & Geometria
-              </p>
-              <span className="text-[10px] text-slate-500 font-mono">
-                Toque nos acabamentos abaixo para alterar
-              </span>
+                Conhecer o catálogo
+                <ArrowRight className="h-5 w-5" />
+              </a>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                Acabamentos Disponíveis
+            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-300">
+              <span className="inline-flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-emerald-300" />
+                Sem instalar app
               </span>
-              <div className="grid grid-cols-2 gap-2">
-                {demoFinishes.map((item) => (
-                  <button
-                    key={item.color}
-                    type="button"
-                    onClick={() => setActiveFinish(item.color)}
-                    className={`flex items-center gap-2 p-2 rounded-xl text-left border text-xs font-medium transition-all ${
-                      activeFinish === item.color
-                        ? "border-emerald-500 bg-emerald-500/10 text-white"
-                        : "border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700"
-                    }`}
-                  >
-                    <span
-                      className="w-3.5 h-3.5 rounded-full shrink-0 border border-white/20"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="truncate text-[11px]">{item.label}</span>
-                  </button>
-                ))}
-              </div>
+              <span className="inline-flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-emerald-300" />
+                Visualização 3D
+              </span>
             </div>
+          </div>
 
-            <div className="mt-6 pt-5 border-t border-slate-800">
-              <Link
-                href="/login"
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-slate-200 hover:text-white transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-emerald-400" />
-                  <span>Entrar com conta existente no telemóvel</span>
+          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+            <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-emerald-400/15 via-teal-400/5 to-transparent blur-2xl" />
+            <div className="relative rounded-[2rem] border border-white/10 bg-slate-900/90 p-5 shadow-2xl shadow-black/30 sm:p-7">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-white">Uma compra mais segura</p>
+                  <p className="mt-1 text-sm text-slate-400">Do primeiro olhar ao pedido</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </Link>
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
+                  <Box className="h-5 w-5" />
+                </span>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-white/[0.07] bg-slate-950/70 p-4 sm:p-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300">
+                    <Box className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-white">Produto em 3D</p>
+                    <p className="mt-0.5 text-sm text-slate-400">Gire e observe de todos os lados</p>
+                  </div>
+                </div>
+                <div className="my-4 ml-5 h-5 border-l border-dashed border-emerald-300/30" />
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-300/10 text-teal-200">
+                    <Palette className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-white">Acabamento à sua escolha</p>
+                    <p className="mt-0.5 text-sm text-slate-400">Veja as opções disponíveis</p>
+                  </div>
+                </div>
+                <div className="my-4 ml-5 h-5 border-l border-dashed border-emerald-300/30" />
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-300/10 text-sky-200">
+                    <PackageCheck className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-white">Pedido simples</p>
+                    <p className="mt-0.5 text-sm text-slate-400">Reúna os produtos no carrinho</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="mt-4 text-center text-sm text-slate-400">
+                A experiência funciona no navegador do seu telemóvel.
+              </p>
             </div>
           </div>
-        </div>
+        </section>
+
+        <section id="como-funciona" className="scroll-mt-24 border-t border-white/[0.07] bg-slate-900/50">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+            <div className="max-w-2xl">
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-300">Simples assim</p>
+              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                O produto certo, ao seu ritmo.
+              </h2>
+              <p className="mt-3 text-base leading-7 text-slate-300">
+                Não precisa de conhecimentos técnicos. Abra o produto que recebeu, explore as opções e envie o seu pedido.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3 sm:gap-4">
+              {[
+                { number: "01", title: "Explore", description: "Abra o produto e veja o modelo em 3D.", icon: Box },
+                { number: "02", title: "Personalize", description: "Escolha entre os acabamentos disponíveis.", icon: Palette },
+                { number: "03", title: "Peça", description: "Envie o seu pedido de forma simples e prática.", icon: PackageCheck },
+              ].map((step) => (
+                <article key={step.number} className="rounded-2xl border border-white/[0.08] bg-slate-950/50 p-5 sm:p-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold tracking-widest text-emerald-300">{step.number}</span>
+                    <step.icon className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                  </div>
+                  <h3 className="mt-5 text-lg font-bold text-white">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">{step.description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
-      {/* RODAPÉ */}
-      <footer className="w-full border-t border-slate-900 py-6 text-center text-xs text-slate-600 font-medium">
-        Catálogo 3D &bull; Visualizador de Produtos e Sistema ERP Multi-Lojas
+      <footer className="border-t border-white/[0.07]">
+        <div className="mx-auto flex max-w-6xl px-4 py-6 text-sm text-slate-400 sm:px-6">
+          <span>Catálogo 3D · Produtos em detalhe</span>
+        </div>
       </footer>
     </div>
   );
