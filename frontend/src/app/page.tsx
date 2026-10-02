@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -14,13 +14,11 @@ import {
   Store,
   ChevronRight,
   LogIn,
-  QrCode,
-  MessageCircle,
   Eye,
   CheckCircle2
 } from "lucide-react";
 
-export default function HomePage() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const storeParam = searchParams.get("store");
@@ -28,7 +26,6 @@ export default function HomePage() {
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [activeFinish, setActiveFinish] = useState("#0f172a");
 
-  // Cores de teste interativo no preview
   const demoFinishes = [
     { label: "Grafite Industrial", color: "#0f172a" },
     { label: "Dourado Nobre", color: "#d97706" },
@@ -37,7 +34,6 @@ export default function HomePage() {
   ];
 
   useEffect(() => {
-    // 1. Auto-login persistido no aparelho
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
 
@@ -51,11 +47,6 @@ export default function HomePage() {
       } catch (e) {
         console.error("Erro ao validar sessão persistida", e);
       }
-    }
-
-    // 2. Se houver link direto da loja no URL (ex: ?store=xyz)
-    if (storeParam) {
-      // Redireciona para o catálogo com filtro da loja se aplicável
     }
 
     setIsLoadingSession(false);
@@ -74,7 +65,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
-      {/* CABEÇALHO RESPONSIVO */}
+      {/* CABEÇALHO */}
       <header className="w-full max-w-7xl mx-auto px-5 sm:px-8 py-5 flex items-center justify-between border-b border-slate-900 sticky top-0 bg-slate-950/80 backdrop-blur-md z-40">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
@@ -112,7 +103,6 @@ export default function HomePage() {
 
       {/* ÁREA PRINCIPAL */}
       <main className="flex-1 max-w-7xl mx-auto px-5 sm:px-8 py-10 lg:py-16 flex flex-col lg:flex-row items-center justify-between gap-12">
-        {/* LADO ESQUERDO: Apresentação & Ação Rápida */}
         <div className="flex-1 text-center lg:text-left space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
             <Sparkles className="w-3.5 h-3.5" />
@@ -127,7 +117,6 @@ export default function HomePage() {
             Permita que clientes e revendedores girem, inspecionem acabamentos e emitam propostas completas com QR Code PIX e WhatsApp direto do navegador.
           </p>
 
-          {/* BOTÕES DE AÇÃO MOBILE-FIRST */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3.5 pt-2">
             <Link
               href="/register"
@@ -147,7 +136,6 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* MINI BADGES DE CONFIANÇA */}
           <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-left">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -164,12 +152,11 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* LADO DIREITO: Simulação Interativa (Desktop e Mobile) */}
+        {/* LADO DIREITO */}
         <div className="w-full max-w-md lg:max-w-lg flex flex-col gap-4">
           <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-7 backdrop-blur-md relative overflow-hidden shadow-2xl">
             <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Cabeçalho do Card Simulado */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
               <div className="flex items-center gap-2.5">
                 <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
@@ -182,7 +169,6 @@ export default function HomePage() {
               </span>
             </div>
 
-            {/* Caixa Visual de Interação */}
             <div
               className="w-full h-48 rounded-2xl border border-slate-800 flex flex-col items-center justify-center p-6 text-center transition-colors duration-500 relative overflow-hidden"
               style={{
@@ -203,7 +189,6 @@ export default function HomePage() {
               </span>
             </div>
 
-            {/* Seletores Interativos de Cor */}
             <div className="mt-4 space-y-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                 Acabamentos Disponíveis
@@ -230,7 +215,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Link Direto para Login da Loja */}
             <div className="mt-6 pt-5 border-t border-slate-800">
               <Link
                 href="/login"
@@ -252,5 +236,20 @@ export default function HomePage() {
         Catálogo 3D &bull; Visualizador de Produtos e Sistema ERP Multi-Lojas
       </footer>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
+        <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 animate-pulse mb-3">
+          <Layers className="w-6 h-6 animate-spin" />
+        </div>
+        <p className="text-xs font-mono text-slate-400">A carregar...</p>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
