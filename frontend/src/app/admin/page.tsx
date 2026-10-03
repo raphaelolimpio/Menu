@@ -168,7 +168,7 @@ export default function AdminDashboard() {
     setNotifications(dynamicNotifs);
   }, [orders, store]);
 
-  
+
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
     if (storedStore) {
       try {
         setStore(JSON.parse(storedStore));
-      } catch (e) {}
+      } catch (e) { }
     }
     setAuthLoading(false);
     loadAllData();
@@ -484,9 +484,8 @@ export default function AdminDashboard() {
 
       {/* SIDEBAR LATERAL FIXA ESTILO ERP */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Logo e Nome do Sistema na Sidebar */}
@@ -526,11 +525,10 @@ export default function AdminDashboard() {
                     setActiveTab(item.id as any);
                     setIsSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left ${
-                    isActive
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left ${isActive
                       ? "bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/10"
                       : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className={`w-4 h-4 ${isActive ? "text-slate-950" : "text-slate-400"}`} />
@@ -617,7 +615,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Ícone: Abrir Catálogo 3D */}
             <Link
-              href={store?.id ? `/products?store=${store.id}` : "/products"}
+              href={store?.id ? `/?store=${store.id}` : "/"}
               title="Ver Catálogo 3D"
               className="p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-600 transition-colors shadow-2xs"
             >
@@ -685,14 +683,12 @@ export default function AdminDashboard() {
                     {notifications.map((n) => (
                       <div
                         key={n.id}
-                        className={`p-3.5 flex gap-3 transition-colors ${
-                          n.read ? "bg-white" : "bg-emerald-50/20"
-                        }`}
+                        className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"
+                          }`}
                       >
                         <span
-                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                            n.read ? "bg-slate-300" : "bg-emerald-500"
-                          }`}
+                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"
+                            }`}
                         />
                         <div className="flex-1">
                           <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
@@ -833,11 +829,10 @@ export default function AdminDashboard() {
                           <button
                             key={r.id}
                             onClick={() => setTimeRange(r.id as any)}
-                            className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all ${
-                              timeRange === r.id
+                            className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all ${timeRange === r.id
                                 ? "bg-slate-900 text-white"
                                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
+                              }`}
                           >
                             {r.label}
                           </button>
@@ -1058,27 +1053,24 @@ export default function AdminDashboard() {
 
                           {/* Resultado Financeiro */}
                           <div
-                            className={`p-5 border rounded-2xl shadow-xs ${
-                              (productionMetrics?.summary?.financialResult || 0) >= 0
+                            className={`p-5 border rounded-2xl shadow-xs ${(productionMetrics?.summary?.financialResult || 0) >= 0
                                 ? "bg-emerald-50/70 border-emerald-200"
                                 : "bg-rose-50/70 border-rose-200"
-                            }`}
+                              }`}
                           >
                             <span
-                              className={`text-[10px] font-bold uppercase flex items-center gap-1 font-mono ${
-                                (productionMetrics?.summary?.financialResult || 0) >= 0
-                                ? "text-emerald-700"
-                                : "text-rose-700"
-                              }`}
+                              className={`text-[10px] font-bold uppercase flex items-center gap-1 font-mono ${(productionMetrics?.summary?.financialResult || 0) >= 0
+                                  ? "text-emerald-700"
+                                  : "text-rose-700"
+                                }`}
                             >
                               <TrendingUp className="w-3.5 h-3.5" /> Resultado Financeiro
                             </span>
                             <p
-                              className={`text-3xl font-black mt-2 font-mono ${
-                                (productionMetrics?.summary?.financialResult || 0) >= 0
+                              className={`text-3xl font-black mt-2 font-mono ${(productionMetrics?.summary?.financialResult || 0) >= 0
                                   ? "text-emerald-600"
                                   : "text-rose-600"
-                              }`}
+                                }`}
                             >
                               R$ {Number(productionMetrics?.summary?.financialResult || 0).toFixed(2)}
                             </p>
@@ -1254,13 +1246,12 @@ export default function AdminDashboard() {
                                     </span>
 
                                     <span
-                                      className={`text-[11px] font-extrabold px-3 py-1 rounded-full border flex items-center gap-1.5 ${
-                                        o.productionStep === "PRONTO_ENTREGA"
+                                      className={`text-[11px] font-extrabold px-3 py-1 rounded-full border flex items-center gap-1.5 ${o.productionStep === "PRONTO_ENTREGA"
                                           ? "bg-emerald-100 text-emerald-800 border-emerald-300 animate-pulse"
                                           : o.productionStep && o.productionStep !== "AGUARDANDO"
                                             ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                                             : "bg-amber-100 text-amber-800 border-amber-200"
-                                      }`}
+                                        }`}
                                     >
                                       {o.productionStep ? `ETAPA: ${o.productionStep}` : "AGUARDANDO INÍCIO"}
                                       <Activity className="w-3.5 h-3.5 text-emerald-500" />
@@ -1411,9 +1402,8 @@ export default function AdminDashboard() {
                                       Tempo Real
                                     </span>
                                     <p
-                                      className={`text-3xl font-black font-mono ${
-                                        hasStarted && isLate ? "text-rose-600 animate-pulse" : "text-slate-900"
-                                      }`}
+                                      className={`text-3xl font-black font-mono ${hasStarted && isLate ? "text-rose-600 animate-pulse" : "text-slate-900"
+                                        }`}
                                     >
                                       {hasStarted ? elapsedMin : 0}{" "}
                                       <span className="text-base font-bold text-slate-500">min</span>
@@ -1425,11 +1415,10 @@ export default function AdminDashboard() {
                                   {hasStarted ? (
                                     <>
                                       <div
-                                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border ${
-                                          isLate
+                                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border ${isLate
                                             ? "bg-rose-50 text-rose-700 border-rose-200"
                                             : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                        }`}
+                                          }`}
                                       >
                                         {isLate
                                           ? `⚠️ Atrasado (${Math.abs(remainingMin)} min)`
@@ -1485,11 +1474,10 @@ export default function AdminDashboard() {
                           <button
                             key={st}
                             onClick={() => setHistoryStatusFilter(st)}
-                            className={`text-xs px-2.5 py-1 rounded-lg font-bold transition-all ${
-                              historyStatusFilter === st
+                            className={`text-xs px-2.5 py-1 rounded-lg font-bold transition-all ${historyStatusFilter === st
                                 ? "bg-slate-900 text-white"
                                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
+                              }`}
                           >
                             {st === "ALL" ? "Todos" : st === "FINISHED" ? "Concluídos" : "Cancelados"}
                           </button>
@@ -1511,11 +1499,10 @@ export default function AdminDashboard() {
                                   {formatOrderCode(o.id, o.createdAt)}
                                 </span>
                                 <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                    o.status === "FINISHED" || o.status === "COMPLETED"
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.status === "FINISHED" || o.status === "COMPLETED"
                                       ? "bg-emerald-100 text-emerald-800"
                                       : "bg-rose-100 text-rose-800"
-                                  }`}
+                                    }`}
                                 >
                                   {o.status === "FINISHED" || o.status === "COMPLETED" ? "CONCLUÍDO" : "CANCELADO"}
                                 </span>

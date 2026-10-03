@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import api, { API_URL } from "@/services/api";
 import {
   Layers,
   Box,
@@ -13,33 +14,153 @@ import {
   Palette,
   BadgeCheck,
   PackageCheck,
+  LayoutDashboard,
+  PlusCircle,
 } from "lucide-react";
 
 function HomeContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const storeParam = searchParams.get("store");
 
+  const [activeStore, setActiveStore] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
+    const storedStore = localStorage.getItem("store");
 
-    if (storedUser && storedToken) {
-      try {
-        const parsed = JSON.parse(storedUser);
-
-      } catch (e) {
-        console.error("Erro ao validar sessão persistida", e);
-      }
+    if (storedUser) {
+      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) {}
     }
 
-  }, [router, storeParam]);
+    let targetStoreId = storeParam;
+    if (!targetStoreId && storedStore) {
+      try {
+        const parsedStore = JSON.parse(storedStore);
+        targetStoreId = parsedStore.id;
+        setActiveStore(parsedStore);
+      } catch (e) {}
+    }
 
+    if (targetStoreId) {
+      fetchStoreProducts(targetStoreId);
+    } else {
+      setLoading(false);
+    }
+  }, [storeParam]);
+
+  const fetchStoreProducts = async (storeId: string) => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/api/products?storeId=${storeId}`);
+      setProducts(res.data || []);
+    } catch (err) {
+      console.error("Erro ao carregar catálogo:", err);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Se existe uma loja selecionada (Dono logado ou link de cliente)
+  if (activeStore || storeParam) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-400 selection:text-slate-950">
+        {/* Topo da Loja */}
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <Layers className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-sm font-black text-white block leading-tight">
+                  {activeStore?.name || "Catálogo 3D"}
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono tracking-wider">
+                  VITRINE DIGITAL
+                </span>
+              </div>
+            </div>
+
+            {currentUser && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-black transition-all shadow-xs"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Painel ERP</span>
+              </Link>
+            )}
+          </div>
+        </header>
+
+        {/* Conteúdo do Catálogo */}
+        <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+          {loading ? (
+            <div className="py-24 text-center flex flex-col items-center justify-center text-slate-400">
+              <div className="w-8 h-8 border-3 border-white/20 border-t-emerald-400 rounded-full animate-spin mb-3" />
+              <p className="text-xs font-bold">Carregando catálogo 3D...</p>
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {products.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-500/40 transition-all"
+                >
+                  <div>
+                    <h3 className="font-bold text-white text-base">{p.name}</h3>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{p.description}</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+                    <span className="text-emerald-400 font-black text-lg">
+                      R$ {Number(p.basePrice || 0).toFixed(2)}
+                    </span>
+                    <Link
+                      href={`/produto/${p.id}`}
+                      className="px-3 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded-lg text-xs"
+                    >
+                      Ver em 3D
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* ESTADO VAZIO: Quando a loja ainda não tem produtos cadastrados */
+            <div className="py-24 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 rounded-3xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-500 mb-4">
+                <Box className="w-8 h-8 text-slate-500" />
+              </div>
+              <h2 className="text-lg font-bold text-white">Nenhum produto cadastrado ainda</h2>
+              <p className="text-xs text-slate-400 max-w-sm mt-1 mb-6">
+                Esta vitrine está pronta. Cadastre seus modelos 3D e produtos pelo painel de controle para que apareçam aqui.
+              </p>
+              {currentUser?.role === "OWNER" && (
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Cadastrar Produtos no Admin</span>
+                </Link>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // Se for visitante genérico sem vínculo de loja: Exibe a Landing Page de Apresentação
   return (
     <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-100 selection:bg-emerald-400 selection:text-slate-950">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex min-h-11 items-center gap-3" aria-label="Catálogo 3D, página inicial">
+          <Link href="/" className="flex min-h-11 items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
               <Layers className="h-5 w-5" />
             </span>
@@ -49,10 +170,10 @@ function HomeContent() {
             </span>
           </Link>
 
-          <nav aria-label="Navegação principal" className="flex items-center gap-2">
+          <nav className="flex items-center gap-2">
             <Link
               href="/register"
-              className="flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/30 sm:px-4"
+              className="flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 sm:px-4"
             >
               <UserPlus className="h-4 w-4" />
               <span>Criar conta</span>
@@ -88,10 +209,10 @@ function HomeContent() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href={storeParam ? `/products?store=${storeParam}` : "/products"}
-                className="flex min-h-14 items-center justify-center gap-2.5 rounded-2xl bg-emerald-400 px-6 text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/30"
+                href="/register"
+                className="flex min-h-14 items-center justify-center gap-2.5 rounded-2xl bg-emerald-400 px-6 text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300"
               >
-                Conhecer o catálogo
+                Criar Minha Loja
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
@@ -109,8 +230,7 @@ function HomeContent() {
           </div>
 
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-emerald-400/15 via-teal-400/5 to-transparent blur-2xl" />
-            <div className="relative rounded-[2rem] border border-white/10 bg-slate-900/90 p-5 shadow-2xl shadow-black/30 sm:p-7">
+            <div className="relative rounded-[2rem] border border-white/10 bg-slate-900/90 p-5 shadow-2xl sm:p-7">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-white">Uma compra mais segura</p>
@@ -120,97 +240,26 @@ function HomeContent() {
                   <Box className="h-5 w-5" />
                 </span>
               </div>
-
-              <div className="mt-6 rounded-2xl border border-white/[0.07] bg-slate-950/70 p-4 sm:p-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300">
-                    <Box className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-white">Produto em 3D</p>
-                    <p className="mt-0.5 text-sm text-slate-400">Gire e observe de todos os lados</p>
-                  </div>
-                </div>
-                <div className="my-4 ml-5 h-5 border-l border-dashed border-emerald-300/30" />
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-300/10 text-teal-200">
-                    <Palette className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-white">Acabamento à sua escolha</p>
-                    <p className="mt-0.5 text-sm text-slate-400">Veja as opções disponíveis</p>
-                  </div>
-                </div>
-                <div className="my-4 ml-5 h-5 border-l border-dashed border-emerald-300/30" />
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-300/10 text-sky-200">
-                    <PackageCheck className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-white">Pedido simples</p>
-                    <p className="mt-0.5 text-sm text-slate-400">Reúna os produtos no carrinho</p>
-                  </div>
-                </div>
-              </div>
-
-              <p className="mt-4 text-center text-sm text-slate-400">
-                A experiência funciona no navegador do seu telemóvel.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section id="como-funciona" className="scroll-mt-24 border-t border-white/[0.07] bg-slate-900/50">
-          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-            <div className="max-w-2xl">
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-300">Simples assim</p>
-              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-                O produto certo, ao seu ritmo.
-              </h2>
-              <p className="mt-3 text-base leading-7 text-slate-300">
-                Não precisa de conhecimentos técnicos. Abra o produto que recebeu, explore as opções e envie o seu pedido.
-              </p>
-            </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3 sm:gap-4">
-              {[
-                { number: "01", title: "Explore", description: "Abra o produto e veja o modelo em 3D.", icon: Box },
-                { number: "02", title: "Personalize", description: "Escolha entre os acabamentos disponíveis.", icon: Palette },
-                { number: "03", title: "Peça", description: "Envie o seu pedido de forma simples e prática.", icon: PackageCheck },
-              ].map((step) => (
-                <article key={step.number} className="rounded-2xl border border-white/[0.08] bg-slate-950/50 p-5 sm:p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold tracking-widest text-emerald-300">{step.number}</span>
-                    <step.icon className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-5 text-lg font-bold text-white">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-400">{step.description}</p>
-                </article>
-              ))}
             </div>
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-white/[0.07]">
-        <div className="mx-auto flex max-w-6xl px-4 py-6 text-sm text-slate-400 sm:px-6">
-          <span>Catálogo 3D · Produtos em detalhe</span>
-        </div>
-      </footer>
     </div>
   );
 }
 
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 animate-pulse mb-3">
-          <Layers className="w-6 h-6 animate-spin" />
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 animate-pulse mb-3">
+            <Layers className="w-6 h-6 animate-spin" />
+          </div>
+          <p className="text-xs font-mono text-slate-400">A carregar...</p>
         </div>
-        <p className="text-xs font-mono text-slate-400">A carregar...</p>
-      </div>
-    }>
+      }
+    >
       <HomeContent />
     </Suspense>
   );
