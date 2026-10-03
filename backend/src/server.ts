@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import routes from './routes';
@@ -7,10 +7,10 @@ import authRoutes from './routes/auth.routes';
 const app = express();
 const PORT = process.env.PORT || 3333;
 
-// Middleware CORS universal com suporte completo a Preflight e Credentials
-app.use((req, res, next) => {
+// Middleware CORS manual prioritário e universal
+app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
-  
+
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
@@ -27,9 +27,10 @@ app.use((req, res, next) => {
     'Origin, X-Requested-With, Content-Type, Accept, Authorization'
   );
 
-  // Responde imediatamente a qualquer checagem preflight do browser
+  // Se for a checagem preliminar (OPTIONS), encerra imediatamente com 200 OK
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
+    res.status(200).end();
+    return;
   }
 
   next();
@@ -52,5 +53,5 @@ app.use('/images', express.static(path.resolve(__dirname, '../uploads/images')))
 app.use('/api', routes);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Backend rodando na porta ${PORT}`);
 });
