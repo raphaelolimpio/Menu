@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import routes from './routes';
@@ -8,24 +7,29 @@ import authRoutes from './routes/auth.routes';
 const app = express();
 const PORT = process.env.PORT || 3333;
 
-// Configuração de CORS compatível com credenciais e múltiplos domínios da Vercel
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Permite requisições sem origin (mobile, Postman) ou de domínios Vercel e localhost
-      if (!origin || origin.includes('vercel.app') || origin.includes('localhost')) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Deixa passar qualquer origem refletindo o header correto
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+// Middleware de CORS manual sem bloqueio de preflight
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
 
-// Trata explicitamente o preflight para todas as rotas
-app.options('*', cors());
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
 app.use(express.json());
 
@@ -38,13 +42,11 @@ if (!fs.existsSync(ordersDir)) fs.mkdirSync(ordersDir, { recursive: true });
 app.use('/uploads/models3d', express.static(modelsDir));
 app.use('/uploads/orders', express.static(ordersDir));
 app.use('/api/auth', authRoutes);
-app.use('/api', authRoutes);
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 app.use('/images', express.static(path.resolve(__dirname, '../uploads/images')));
 
 app.use('/api', routes);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Backend rodando na porta ${PORT}`);
-  console.log(`📦 Modelos 3D em: http://localhost:${PORT}/uploads/models3d/`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
