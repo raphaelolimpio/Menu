@@ -1551,5 +1551,5 @@ export default function AdminDashboard() {
     >
       <AdminDashboardContent />
     </Suspense>
-  );
+  ); 
 }
