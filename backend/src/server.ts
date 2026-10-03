@@ -7,14 +7,16 @@ import authRoutes from './routes/auth.routes';
 const app = express();
 const PORT = process.env.PORT || 3333;
 
-// Middleware de CORS manual sem bloqueio de preflight
+// Middleware CORS universal com suporte completo a Preflight e Credentials
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
+
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader(
     'Access-Control-Allow-Methods',
@@ -25,9 +27,11 @@ app.use((req, res, next) => {
     'Origin, X-Requested-With, Content-Type, Accept, Authorization'
   );
 
+  // Responde imediatamente a qualquer checagem preflight do browser
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
   }
+
   next();
 });
 
