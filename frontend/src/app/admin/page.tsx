@@ -118,7 +118,7 @@ export default function AdminDashboard() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Lista de Notificações com persistência global
-  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -128,14 +128,15 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Sincronização global de notificações
   useEffect(() => {
-    if (!orders || orders.length === 0) return;
+    if (!orders || orders.length === 0) {
+      setNotifications([]);
+      return;
+    }
 
-    // Recupera quais IDs de notificação o usuário já marcou como lidas
-    const readIds: string[] = JSON.parse(localStorage.getItem("read_notifications_ids") || "[]");
+    const storageKey = store?.id ? `read_notifications_${store.id}` : "read_notifications_ids";
+    const readIds: string[] = JSON.parse(localStorage.getItem(storageKey) || "[]");
 
-    // Gera notificações automáticas para os pedidos recebidos da API
     const dynamicNotifs = orders.slice(0, 8).map((o: any) => {
       const orderCode = formatOrderCode(o.id, o.createdAt);
       const notifId = `order-${o.id}-${o.productionStep || o.status}`;
@@ -165,7 +166,7 @@ export default function AdminDashboard() {
     });
 
     setNotifications(dynamicNotifs);
-  }, [orders]);
+  }, [orders, store]);
 
   
 
@@ -277,11 +278,11 @@ export default function AdminDashboard() {
 
   const markAllNotificationsAsRead = () => {
     const allIds = notifications.map((n) => n.id);
-    localStorage.setItem("read_notifications_ids", JSON.stringify(allIds));
+    const storageKey = store?.id ? `read_notifications_${store.id}` : "read_notifications_ids";
+    localStorage.setItem(storageKey, JSON.stringify(allIds));
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     window.dispatchEvent(new Event("notifications-updated"));
   };
-
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
