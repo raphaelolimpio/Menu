@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -13,6 +13,7 @@ import {
   Palette,
   BadgeCheck,
   PackageCheck,
+  LayoutDashboard,
 } from "lucide-react";
 
 function HomeContent() {
@@ -20,20 +21,31 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const storeParam = searchParams.get("store");
 
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentStore, setCurrentStore] = useState<any>(null);
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
+    const storedStore = localStorage.getItem("store");
 
-    if (storedUser && storedToken) {
+    if (storedUser) {
       try {
-        const parsed = JSON.parse(storedUser);
-        
-      } catch (e) {
-        console.error("Erro ao validar sessão persistida", e);
-      }
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (e) {}
     }
 
-  }, [router, storeParam]);
+    if (storedStore) {
+      try {
+        setCurrentStore(JSON.parse(storedStore));
+      } catch (e) {}
+    }
+  }, [storeParam]);
+
+  const catalogUrl = storeParam
+    ? `/products?store=${storeParam}`
+    : currentStore?.id
+    ? `/products?store=${currentStore.id}`
+    : "/products";
 
   return (
     <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-100 selection:bg-emerald-400 selection:text-slate-950">
@@ -44,26 +56,40 @@ function HomeContent() {
               <Layers className="h-5 w-5" />
             </span>
             <span>
-              <span className="block text-sm font-extrabold tracking-tight text-white">Catálogo 3D</span>
+              <span className="block text-sm font-extrabold tracking-tight text-white">
+                {currentStore?.name || "Catálogo 3D"}
+              </span>
               <span className="block text-[11px] text-slate-400">Produtos em detalhe</span>
             </span>
           </Link>
 
           <nav aria-label="Navegação principal" className="flex items-center gap-2">
-            <Link
-              href="/register"
-              className="flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/30 sm:px-4"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span>Criar conta</span>
-            </Link>
-            <Link
-              href="/login"
-              className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 text-sm font-bold text-white transition hover:border-emerald-300/30 hover:bg-white/10 sm:px-4"
-            >
-              <LogIn className="h-4 w-4 text-emerald-300" />
-              <span>Entrar</span>
-            </Link>
+            {currentUser ? (
+              <Link
+                href="/admin"
+                className="flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 sm:px-4"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Aceder ao Painel ERP</span>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 sm:px-4"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Criar conta</span>
+                </Link>
+                <Link
+                  href="/login"
+                  className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 text-sm font-bold text-white transition hover:border-emerald-300/30 hover:bg-white/10 sm:px-4"
+                >
+                  <LogIn className="h-4 w-4 text-emerald-300" />
+                  <span>Entrar</span>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -87,13 +113,13 @@ function HomeContent() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#como-funciona"
-                className="flex min-h-14 items-center justify-center gap-2.5 rounded-2xl bg-emerald-400 px-6 text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/30"
+              <Link
+                href={catalogUrl}
+                className="flex min-h-14 items-center justify-center gap-2.5 rounded-2xl bg-emerald-400 px-6 text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300"
               >
                 Conhecer o catálogo
                 <ArrowRight className="h-5 w-5" />
-              </a>
+              </Link>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-300">
@@ -203,14 +229,16 @@ function HomeContent() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 animate-pulse mb-3">
-          <Layers className="w-6 h-6 animate-spin" />
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 animate-pulse mb-3">
+            <Layers className="w-6 h-6 animate-spin" />
+          </div>
+          <p className="text-xs font-mono text-slate-400">A carregar...</p>
         </div>
-        <p className="text-xs font-mono text-slate-400">A carregar...</p>
-      </div>
-    }>
+      }
+    >
       <HomeContent />
     </Suspense>
   );
