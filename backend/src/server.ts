@@ -1,5 +1,4 @@
-import express from 'express';
-import cors from 'cors';
+import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import routes from './routes';
@@ -8,21 +7,36 @@ import authRoutes from './routes/auth.routes';
 const app = express();
 const PORT = process.env.PORT || 3333;
 
-// Habilita proxy reverso (necessário para o Railway encaminhar headers e origens corretamente)
 app.set('trust proxy', 1);
 
-// Middleware oficial CORS aplicado globalmente
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Aceita qualquer origem refletindo o header Access-Control-Allow-Origin dinamicamente
-      callback(null, true);
-    },
-    credentials: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  })
-);
+// Middleware prioritário de CORS
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
+
+  // Responde com sucesso imediato ao preflight OPTIONS
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
+  next();
+});
 
 app.use(express.json());
 
@@ -34,12 +48,15 @@ if (!fs.existsSync(ordersDir)) fs.mkdirSync(ordersDir, { recursive: true });
 
 app.use('/uploads/models3d', express.static(modelsDir));
 app.use('/uploads/orders', express.static(ordersDir));
-app.use('/api/auth', authRoutes);
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 app.use('/images', express.static(path.resolve(__dirname, '../uploads/images')));
 
+// Rotas de autenticação
+app.use('/api/auth', authRoutes);
+
+// Rotas da aplicação
 app.use('/api', routes);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor backend a correr na porta ${PORT}`);
 });
