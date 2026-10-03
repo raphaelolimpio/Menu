@@ -1587,18 +1587,3 @@ export function AdminDashboardContent() {
     </div>
   );
 }
-export default function AdminDashboard() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-950">
-          <div className="text-sm font-bold text-slate-400 animate-pulse">
-            Carregando painel...
-          </div>
-        </div>
-      }
-    >
-      <AdminDashboardContent />
-    </Suspense>
-  );
-}
