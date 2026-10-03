@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
+import api, { API_URL } from "@/services/api";
 import {
   CheckCircle2,
   Clock,
@@ -47,8 +48,8 @@ export default function PropostaPublicaPage() {
   const [approving, setApproving] = useState(false);
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:3333/api/orders/${id}/publico`)
+    api
+      .get(`/api/orders/${id}/publico`)
       .then((res) => setOrder(res.data))
       .catch((err) => console.error("Erro ao carregar proposta pública:", err))
       .finally(() => setLoading(false));
@@ -57,7 +58,7 @@ export default function PropostaPublicaPage() {
   const handleApprove = async () => {
     setApproving(true);
     try {
-      await axios.patch(`http://localhost:3333/api/orders/${id}/aprovar-orcamento`);
+      await api.patch(`/api/orders/${id}/aprovar-orcamento`);
 
       // Registra a aprovação na lista global de notificações sincronizadas
       const orderYear = new Date(order.createdAt).getFullYear() || 2026;

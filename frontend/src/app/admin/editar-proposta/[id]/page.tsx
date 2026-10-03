@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { useCart } from "@/context/CartContext";
+import api, { API_URL } from "@/services/api";
 import {
   ArrowLeft,
   Trash2,
@@ -104,8 +105,8 @@ export default function EditarPropostaPage() {
     }
 
     // Busca os dados da proposta atual
-    axios
-      .get(`http://localhost:3333/api/orders/${id}/publico`)
+    api
+      .get(`/api/orders/${id}/publico`)
       .then((res) => {
         setOrder(res.data);
         setItems(res.data.items || []);
@@ -220,7 +221,7 @@ export default function EditarPropostaPage() {
         totalAmount: finalTotal,
       };
 
-      await axios.patch(`http://localhost:3333/api/orders/${id}/editar`, payload);
+      await api.patch(`/api/orders/${id}/editar`, payload);
 
       // Dispara notificação no ecossistema
       const orderYear = new Date(order.createdAt).getFullYear() || 2026;

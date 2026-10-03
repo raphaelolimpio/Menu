@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
+import api, { API_URL } from "@/services/api";
 import {
   Upload,
   Trash2,
@@ -93,7 +94,7 @@ export default function ProductManagement() {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:3333/api/products?storeId=${storeId}`);
+      const res = await api.get(`/api/products?storeId=${storeId}`);
       setProducts(res.data || []);
     } catch (err) {
       console.error("Erro ao carregar produtos:", err);
@@ -259,10 +260,10 @@ export default function ProductManagement() {
 
     try {
       if (editingProductId) {
-        await axios.put(`http://localhost:3333/api/products/${editingProductId}`, formData, config);
+        await api.put(`/api/products/${editingProductId}`, formData, config);
         alert("Produto atualizado com sucesso!");
       } else {
-        await axios.post("http://localhost:3333/api/products", formData, config);
+        await api.post("/api/products", formData, config);
         alert("Produto cadastrado com sucesso!");
       }
       handleCloseModal();
@@ -279,7 +280,7 @@ export default function ProductManagement() {
     const token = localStorage.getItem("token");
     const config = { headers: { Authorization: `Bearer ${token}` } };
     try {
-      await axios.delete(`http://localhost:3333/api/products/${id}`, config);
+      await api.delete(`/api/products/${id}`, config);
       setProducts((prev) => prev.filter((p) => p.id !== id));
       if (editingProductId === id) handleCloseModal();
       alert("Produto excluído com sucesso!");

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import dynamic from "next/dynamic";
+import api, { API_URL } from "@/services/api";
 import {
   ArrowLeft,
   Plus,
@@ -172,8 +173,8 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (!productId) return;
-    axios
-      .get(`http://localhost:3333/api/products/${productId}`)
+    api
+      .get(`/api/products/${productId}`)
       .then((res) => {
         setProduct(res.data);
         initColors(res.data);

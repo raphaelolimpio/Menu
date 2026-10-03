@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import api, { API_URL } from "@/services/api";
 import {
   ArrowLeft,
   Mail,
@@ -26,7 +27,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3333/api/auth/forgot-password", { email });
+      const res = await api.post("/api/auth/forgot-password", { email });
       setMessage(res.data.message || "Instruções enviadas com sucesso para seu e-mail.");
     } catch (err: any) {
       setError(err.response?.data?.error || "Erro ao solicitar recuperação de senha.");

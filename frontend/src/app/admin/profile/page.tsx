@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import api, { API_URL } from "@/services/api";
 import {
   Copy,
   Users,
@@ -167,7 +168,7 @@ export default function ProfileAndTeamPage() {
   const loadTeam = async (storeId: string) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`http://localhost:3333/api/auth/team/${storeId}`, {
+      const res = await api.get(`/api/auth/team/${storeId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTeam(res.data);
@@ -205,8 +206,8 @@ export default function ProfileAndTeamPage() {
   ) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.patch(
-        `http://localhost:3333/api/team/${sellerId}`,
+      await api.patch(
+        `/api/team/${sellerId}`,
         { status, commissionPercent, maxDiscountPercent },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -229,7 +230,7 @@ export default function ProfileAndTeamPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const uploadRes = await axios.post("http://localhost:3333/api/upload", formData, {
+      const uploadRes = await api.post("/api/upload", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -239,7 +240,7 @@ export default function ProfileAndTeamPage() {
       const imageUrl = uploadRes.data.url;
 
       if (type === "avatar") {
-        await axios.patch(`http://localhost:3333/api/users/${user.id}`, { avatarUrl: imageUrl }, {
+        await api.patch(`/api/users/${user.id}`, { avatarUrl: imageUrl }, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const updatedUser = { ...user, avatarUrl: imageUrl };
@@ -248,7 +249,7 @@ export default function ProfileAndTeamPage() {
         window.dispatchEvent(new Event("storage-updated"));
         alert("Foto de perfil atualizada com sucesso!");
       } else {
-        await axios.patch(`http://localhost:3333/api/stores/${store.id}`, { logoUrl: imageUrl }, {
+        await api.patch(`/api/stores/${store.id}`, { logoUrl: imageUrl }, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const updatedStore = { ...store, logoUrl: imageUrl };
@@ -278,7 +279,7 @@ export default function ProfileAndTeamPage() {
         greeting: storeGreeting,
       };
 
-      await axios.patch(`http://localhost:3333/api/stores/${store.id}`, payload, {
+      await api.patch(`/api/stores/${store.id}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

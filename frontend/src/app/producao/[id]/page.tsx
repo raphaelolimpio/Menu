@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
+import api, { API_URL } from "@/services/api";
 import {
   Scissors,
   Flame,
@@ -153,8 +154,8 @@ export default function LinhaProducaoPage() {
 
   const loadOrder = () => {
     setLoading(true);
-    axios
-      .get(`http://localhost:3333/api/orders/${orderId}/producao?storeId=${storeId}`)
+    api
+      .get(`/api/orders/${orderId}/producao?storeId=${storeId}`)
       .then((res) => setOrder(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -167,7 +168,7 @@ export default function LinhaProducaoPage() {
   const handleUpdateStep = async (step: string) => {
     setUpdating(true);
     try {
-      await axios.patch(`http://localhost:3333/api/orders/${orderId}/etapa-producao`, {
+      await api.patch(`/api/orders/${orderId}/etapa-producao`, {
         productionStep: step,
         storeId,
       });

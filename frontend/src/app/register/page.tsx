@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import api, { API_URL } from "@/services/api";
 import {
   Store,
   UserCheck,
@@ -38,7 +39,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3333/api/auth/register", {
+      const res = await api.post("/api/auth/register", {
         name,
         email,
         password,

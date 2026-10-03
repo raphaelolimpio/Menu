@@ -5,7 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogIn, ArrowRight, Lock, Mail, Layers, AlertCircle } from "lucide-react";
-
+import api, { API_URL } from "@/services/api";
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -19,7 +19,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3333/api/auth/login", {
+      const res = await api.post("/api/auth/login", {
         email,
         password,
       });

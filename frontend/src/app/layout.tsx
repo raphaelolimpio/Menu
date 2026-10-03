@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Catálogo 3D Interativo",
   description: "Configurador 3D de produtos industriais",
   manifest: "/manifest.json",
-  themeColor: "#0F172A" 
+  themeColor: "#10b981",
 };
 
 export default function RootLayout({

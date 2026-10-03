@@ -6,6 +6,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import api, { API_URL } from "@/services/api";
 import {
   ShoppingCart,
   LayoutDashboard,
@@ -225,25 +226,25 @@ export default function AdminDashboard() {
       };
 
       const [metricsRes, ordersRes, customersRes, commRes, productsRes, prodRes] = await Promise.all([
-        axios
-          .get(`http://localhost:3333/api/orders/analytics/dashboard?range=${timeRange}&storeId=${storeId}`, config)
+        api
+          .get(`api/orders/analytics/dashboard?range=${timeRange}&storeId=${storeId}`, config)
           .catch(() => ({ data: defaultMetrics })),
-        axios
+        api
           .get(`http://localhost:3333/api/orders?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
-        axios
+        api
           .get(`http://localhost:3333/api/customers?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
-        axios
+        api
           .get(
             `http://localhost:3333/api/orders/analytics/commissions?range=${timeRange}&storeId=${storeId}&userId=${userObj?.id}&role=${userObj?.role}`,
             config
           )
           .catch(() => ({ data: { summary: {}, sellers: [] } })),
-        axios
+        api
           .get(`http://localhost:3333/api/products?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
-        axios
+        api
           .get(`http://localhost:3333/api/orders/analytics/production?range=${timeRange}&storeId=${storeId}`, config)
           .catch(() => ({ data: null })),
       ]);
@@ -286,7 +287,7 @@ export default function AdminDashboard() {
 
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
-      await axios.patch(`http://localhost:3333/api/orders/${orderId}/status`, { status: newStatus });
+      await api.patch(`api/orders/${orderId}/status`, { status: newStatus });
       loadAllData();
     } catch (err: any) {
       alert("Erro ao atualizar status: " + err.message);
@@ -1283,7 +1284,7 @@ export default function AdminDashboard() {
                                   </Link>
 
                                   <a
-                                    href={`http://localhost:3333/api/orders/${o.id}/production-pdf`}
+                                    href={`${API_URL}/api/orders/${o.id}/production-pdf`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-colors shadow-2xs"
@@ -1293,7 +1294,7 @@ export default function AdminDashboard() {
 
                                   {o.pdfUrl && (
                                     <a
-                                      href={`http://localhost:3333/api${o.pdfUrl.startsWith("/") ? o.pdfUrl : `/${o.pdfUrl}`}`}
+                                      href={`${API_URL}/api${o.pdfUrl.startsWith("/") ? o.pdfUrl : `/${o.pdfUrl}`}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-colors shadow-2xs"

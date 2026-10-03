@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import api, { API_URL } from "@/services/api";
 import {
   X,
   Search,
@@ -83,8 +84,8 @@ export default function CheckoutModal({
 
   const loadCustomers = (query = "") => {
     const sId = getActiveStoreId();
-    axios
-      .get(`http://localhost:3333/api/customers?search=${encodeURIComponent(query)}&storeId=${sId || ""}`)
+    api
+      .get(`/api/customers?search=${encodeURIComponent(query)}&storeId=${sId || ""}`)
       .then((res) => setCustomers(res.data))
       .catch(console.error);
   };
@@ -105,13 +106,13 @@ export default function CheckoutModal({
     const sId = getActiveStoreId();
     try {
       if (formData.id) {
-        const res = await axios.put(`http://localhost:3333/api/customers/${formData.id}`, {
+        const res = await api.put(`/api/customers/${formData.id}`, {
           ...formData,
           storeId: sId,
         });
         setSelectedCustomer(res.data);
       } else {
-        const res = await axios.post("http://localhost:3333/api/customers", {
+        const res = await api.post("/api/customers", {
           ...formData,
           storeId: sId,
         });
@@ -138,7 +139,7 @@ export default function CheckoutModal({
 
     setIsProcessing(true);
     try {
-      const res = await axios.post("http://localhost:3333/api/orders", {
+      const res = await api.post("/api/orders", {
         customerId: selectedCustomer.id,
         storeId: sId,
         sellerId: sellerId || null,
@@ -454,7 +455,7 @@ export default function CheckoutModal({
                 <div className="w-full space-y-2 pt-2">
                   {orderResult?.pdfUrl && (
                     <a
-                      href={`http://localhost:3333/api${orderResult.pdfUrl.startsWith('/') ? orderResult.pdfUrl : `/${orderResult.pdfUrl}`}`}
+                      href={`${API_URL}${orderResult.pdfUrl.startsWith('/') ? orderResult.pdfUrl : `/${orderResult.pdfUrl}`}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full flex items-center justify-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 py-2.5 rounded-xl text-xs font-bold text-slate-700 shadow-2xs"
@@ -464,7 +465,7 @@ export default function CheckoutModal({
                   )}
                   {orderResult.receiptPdfUrl && (
                     <a
-                      href={`http://localhost:3333/api${orderResult.receiptPdfUrl}`}
+                      href={`${API_URL}${orderResult.receiptPdfUrl}`}
                       target="_blank"
                       download
                       className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs"
