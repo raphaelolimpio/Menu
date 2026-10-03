@@ -27,10 +27,7 @@ function HomeContent() {
     if (storedUser && storedToken) {
       try {
         const parsed = JSON.parse(storedUser);
-        if (["OWNER", "SELLER", "ADMIN"].includes(parsed.role)) {
-          router.replace("/admin");
-          return;
-        }
+        
       } catch (e) {
         console.error("Erro ao validar sessão persistida", e);
       }
