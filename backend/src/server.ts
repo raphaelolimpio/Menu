@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
+import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import routes from './routes';
@@ -9,52 +10,21 @@ const PORT = process.env.PORT || 3333;
 
 app.set('trust proxy', 1);
 
-// Middleware manual de CORS prioritário
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const origin = req.headers.origin;
-
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
-
-// Garante tratamento de OPTIONS em qualquer endpoint da aplicação
-app.options('*', (req: Request, res: Response) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-  res.sendStatus(204);
-});
+// Middleware CORS oficial: reflete qualquer origem e responde a preflight automaticamente
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+    ],
+  })
+);
 
 app.use(express.json());
 
