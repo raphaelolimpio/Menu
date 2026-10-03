@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import ExcelJS from "exceljs";
-import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
@@ -22,8 +21,6 @@ import {
   Layers,
   Filter,
   LogOut,
-  FileText,
-  CheckCircle2,
   DollarSign,
   MoreVertical,
   Edit,
@@ -32,9 +29,7 @@ import {
   XCircle,
   Factory,
   TrendingUp,
-  TrendingDown,
   Timer,
-  AlertCircle,
   Bell,
   ChevronDown,
   Activity,
@@ -60,36 +55,12 @@ import ProductManagement from "@/components/admin/ProductManagement";
 
 const COLORS = ["#0284c7", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
-const DEFAULT_NOTIFICATIONS = [
-  {
-    id: "1",
-    title: "Nova Ordem de Produção",
-    desc: "Pedido aguardando corte no chão de fábrica.",
-    time: "Há 10 min",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Etapa de Manufatura Concluída",
-    desc: "Um lote foi concluído e está pronto para expedição.",
-    time: "Há 45 min",
-    read: false,
-  },
-  {
-    id: "3",
-    title: "Proposta Aprovada",
-    desc: "Cliente aprovou o orçamento 3D via link público.",
-    time: "Há 2 horas",
-    read: true,
-  },
-];
-
 const formatOrderCode = (id: number, dateStr: string) => {
   const year = new Date(dateStr).getFullYear() || 2026;
   return `PED-${year}-${String(id).padStart(4, "0")}`;
 };
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const router = useRouter();
   const { cart } = useCart();
   const [products, setProducts] = useState<any[]>([]);
@@ -115,23 +86,18 @@ export default function AdminDashboard() {
   const [historySearch, setHistorySearch] = useState("");
   const [historyStatusFilter, setHistoryStatusFilter] = useState<"ALL" | "FINISHED" | "CANCELED">("ALL");
 
-  // Pop-ups do Cabeçalho Superior
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  // Lista de Notificações com persistência global
   const [notifications, setNotifications] = useState<any[]>([]);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  
 
   useEffect(() => {
     if (tabParam && ["dashboard", "orders", "history", "contacts", "products", "commissions", "production"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
-
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -178,8 +144,6 @@ export default function AdminDashboard() {
     setNotifications(dynamicNotifs);
   }, [orders, store]);
 
-
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
@@ -194,13 +158,12 @@ export default function AdminDashboard() {
     if (storedStore) {
       try {
         setStore(JSON.parse(storedStore));
-      } catch (e) { }
+      } catch (e) {}
     }
     setAuthLoading(false);
     loadAllData();
   }, [timeRange, router]);
 
-  // Fechar pop-ups ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -416,7 +379,6 @@ export default function AdminDashboard() {
     document.body.removeChild(link);
   };
 
-  // Garante que pedidos ativos (PENDING, PAID, QUOTE, WAITING, etc.) entrem na lista
   const activeOrders = orders.filter(
     (o) => o.status !== "FINISHED" && o.status !== "COMPLETED" && o.status !== "CANCELED"
   );
@@ -484,7 +446,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
-      {/* OVERLAY MOBILE PARA SIDEBAR */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-slate-950/60 z-40 lg:hidden backdrop-blur-xs transition-opacity"
@@ -492,13 +453,12 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* SIDEBAR LATERAL FIXA ESTILO ERP */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
+        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
-          {/* Logo e Nome do Sistema na Sidebar */}
           <div className="h-20 flex items-center justify-between px-6 border-b border-slate-900 bg-slate-950">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -517,7 +477,6 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          {/* Menus Principais */}
           <nav className="p-4 space-y-1">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 block mb-2 mt-2">
               Menu Principal
@@ -535,10 +494,11 @@ export default function AdminDashboard() {
                     setActiveTab(item.id as any);
                     setIsSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left ${isActive
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left ${
+                    isActive
                       ? "bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/10"
                       : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className={`w-4 h-4 ${isActive ? "text-slate-950" : "text-slate-400"}`} />
@@ -566,7 +526,6 @@ export default function AdminDashboard() {
           </nav>
         </div>
 
-        {/* Informações do Usuário no Rodapé da Sidebar */}
         <div className="p-4 border-t border-slate-900 bg-slate-950/70">
           <div className="flex items-center gap-3 px-1 mb-3">
             <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -593,11 +552,8 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* PAINEL PRINCIPAL DE CONTEÚDO */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* CABEÇALHO SUPERIOR */}
         <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-20 shrink-0 shadow-2xs">
-          {/* LADO ESQUERDO: HAMBÚRGUER + LOGOMARCA */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -621,7 +577,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* LADO DIREITO: ÍCONES RÁPIDOS + NOTIFICAÇÕES + AVATAR POP-UP */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Ícone: Abrir Catálogo 3D */}
             <Link
@@ -648,7 +603,7 @@ export default function AdminDashboard() {
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
-            {/* ÍCONE DE NOTIFICAÇÕES SINCRONIZADO */}
+            {/* Notificações */}
             <div className="relative" ref={notifRef}>
               <button
                 type="button"
@@ -693,12 +648,14 @@ export default function AdminDashboard() {
                     {notifications.map((n) => (
                       <div
                         key={n.id}
-                        className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"
-                          }`}
+                        className={`p-3.5 flex gap-3 transition-colors ${
+                          n.read ? "bg-white" : "bg-emerald-50/20"
+                        }`}
                       >
                         <span
-                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"
-                            }`}
+                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                            n.read ? "bg-slate-300" : "bg-emerald-500"
+                          }`}
                         />
                         <div className="flex-1">
                           <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
@@ -712,7 +669,7 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* AVATAR COM POP-UP DETALHADO */}
+            {/* Avatar & Perfil */}
             <div className="relative" ref={profileRef}>
               <button
                 type="button"
@@ -732,7 +689,6 @@ export default function AdminDashboard() {
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
               </button>
 
-              {/* POP-UP DO USUÁRIO */}
               {isProfileOpen && currentUser && (
                 <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                   <div className="p-4 bg-slate-50/80 border-b border-slate-100 flex items-center gap-3">
@@ -794,7 +750,6 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* Sub-Cabeçalho com Botão de Exportar */}
         <div className="px-6 sm:px-8 pt-6 pb-2 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shrink-0">
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight">{getPageTitle()}</h1>
@@ -809,7 +764,6 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* Área com Rolagem Independente */}
         <main className="flex-1 overflow-y-auto px-6 sm:px-8 py-4">
           <div className="max-w-7xl mx-auto space-y-6">
             {loading ? (
@@ -839,10 +793,11 @@ export default function AdminDashboard() {
                           <button
                             key={r.id}
                             onClick={() => setTimeRange(r.id as any)}
-                            className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all ${timeRange === r.id
+                            className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all ${
+                              timeRange === r.id
                                 ? "bg-slate-900 text-white"
                                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              }`}
+                            }`}
                           >
                             {r.label}
                           </button>
@@ -1043,12 +998,9 @@ export default function AdminDashboard() {
                 {/* 4. ABAS DE FILA DE PEDIDOS E DE PRODUÇÃO & PCP */}
                 {(activeTab === "orders" || activeTab === "production") && (
                   <div className="space-y-6">
-                    {/* Exibe os cards analíticos e gráficos se for o Proprietário na aba de Produção */}
                     {activeTab === "production" && currentUser?.role === "OWNER" && (
                       <div className="space-y-6">
-                        {/* GRID DE CARDS MACRO EXPANDIDO (4 INDICADORES) */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          {/* Eficiência */}
                           <div className="bg-white p-5 border border-slate-200/90 rounded-2xl shadow-xs">
                             <span className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 font-mono">
                               <Timer className="w-3.5 h-3.5 text-emerald-500" /> Eficiência Operacional
@@ -1061,26 +1013,28 @@ export default function AdminDashboard() {
                             </span>
                           </div>
 
-                          {/* Resultado Financeiro */}
                           <div
-                            className={`p-5 border rounded-2xl shadow-xs ${(productionMetrics?.summary?.financialResult || 0) >= 0
+                            className={`p-5 border rounded-2xl shadow-xs ${
+                              (productionMetrics?.summary?.financialResult || 0) >= 0
                                 ? "bg-emerald-50/70 border-emerald-200"
                                 : "bg-rose-50/70 border-rose-200"
-                              }`}
+                            }`}
                           >
                             <span
-                              className={`text-[10px] font-bold uppercase flex items-center gap-1 font-mono ${(productionMetrics?.summary?.financialResult || 0) >= 0
+                              className={`text-[10px] font-bold uppercase flex items-center gap-1 font-mono ${
+                                (productionMetrics?.summary?.financialResult || 0) >= 0
                                   ? "text-emerald-700"
                                   : "text-rose-700"
-                                }`}
+                              }`}
                             >
                               <TrendingUp className="w-3.5 h-3.5" /> Resultado Financeiro
                             </span>
                             <p
-                              className={`text-3xl font-black mt-2 font-mono ${(productionMetrics?.summary?.financialResult || 0) >= 0
+                              className={`text-3xl font-black mt-2 font-mono ${
+                                (productionMetrics?.summary?.financialResult || 0) >= 0
                                   ? "text-emerald-600"
                                   : "text-rose-600"
-                                }`}
+                              }`}
                             >
                               R$ {Number(productionMetrics?.summary?.financialResult || 0).toFixed(2)}
                             </p>
@@ -1089,7 +1043,6 @@ export default function AdminDashboard() {
                             </span>
                           </div>
 
-                          {/* Horas Trabalhadas */}
                           <div className="bg-white p-5 border border-slate-200/90 rounded-2xl shadow-xs">
                             <span className="text-[10px] font-bold uppercase text-slate-400 font-mono">
                               Horas de Máquina / Fabril
@@ -1102,7 +1055,6 @@ export default function AdminDashboard() {
                             </span>
                           </div>
 
-                          {/* Unidades em Chão de Fábrica (WIP) */}
                           <div className="bg-white p-5 border border-slate-200/90 rounded-2xl shadow-xs">
                             <span className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 font-mono">
                               <Factory className="w-3.5 h-3.5 text-blue-500" /> Carga em Processo
@@ -1120,9 +1072,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        {/* SEÇÃO DE GRÁFICOS ANALÍTICOS DE PCP */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          {/* 1. Distribuição de Peças por Etapa Fabril */}
                           <div className="bg-white p-5 border border-slate-200/90 rounded-2xl shadow-xs">
                             <div className="flex items-center justify-between mb-4">
                               <div>
@@ -1158,7 +1108,6 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
-                          {/* 2. Estimativa de Tempo vs. Real por Lote Aberto */}
                           <div className="bg-white p-5 border border-slate-200/90 rounded-2xl shadow-xs">
                             <div className="flex items-center justify-between mb-4">
                               <div>
@@ -1205,7 +1154,6 @@ export default function AdminDashboard() {
                       </div>
                     )}
 
-                    {/* LISTA COMPLETA DE ORDENS E PEDIDOS ATIVOS */}
                     <div className="space-y-4">
                       {activeOrders.map((o) => {
                         let totalEstimatedMin = 0;
@@ -1256,12 +1204,13 @@ export default function AdminDashboard() {
                                     </span>
 
                                     <span
-                                      className={`text-[11px] font-extrabold px-3 py-1 rounded-full border flex items-center gap-1.5 ${o.productionStep === "PRONTO_ENTREGA"
+                                      className={`text-[11px] font-extrabold px-3 py-1 rounded-full border flex items-center gap-1.5 ${
+                                        o.productionStep === "PRONTO_ENTREGA"
                                           ? "bg-emerald-100 text-emerald-800 border-emerald-300 animate-pulse"
                                           : o.productionStep && o.productionStep !== "AGUARDANDO"
                                             ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                                             : "bg-amber-100 text-amber-800 border-amber-200"
-                                        }`}
+                                      }`}
                                     >
                                       {o.productionStep ? `ETAPA: ${o.productionStep}` : "AGUARDANDO INÍCIO"}
                                       <Activity className="w-3.5 h-3.5 text-emerald-500" />
@@ -1275,7 +1224,6 @@ export default function AdminDashboard() {
                                   </p>
                                 </div>
 
-                                {/* Ações do Pedido */}
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Link
                                     href={`/linha-producao/${o.id}?storeId=${store?.id || ""}`}
@@ -1312,7 +1260,6 @@ export default function AdminDashboard() {
                                     WhatsApp
                                   </button>
 
-                                  {/* Menu de Ações */}
                                   <div className="relative">
                                     <button
                                       type="button"
@@ -1371,7 +1318,6 @@ export default function AdminDashboard() {
                               </div>
                             </div>
 
-                            {/* Detalhes de Produção do Card */}
                             <div className="border border-slate-200 rounded-2xl p-5 bg-white shadow-2xs">
                               <span className="text-xs font-black uppercase text-slate-800 tracking-wider block mb-4 font-mono">
                                 Métricas em Tempo Real
@@ -1412,8 +1358,9 @@ export default function AdminDashboard() {
                                       Tempo Real
                                     </span>
                                     <p
-                                      className={`text-3xl font-black font-mono ${hasStarted && isLate ? "text-rose-600 animate-pulse" : "text-slate-900"
-                                        }`}
+                                      className={`text-3xl font-black font-mono ${
+                                        hasStarted && isLate ? "text-rose-600 animate-pulse" : "text-slate-900"
+                                      }`}
                                     >
                                       {hasStarted ? elapsedMin : 0}{" "}
                                       <span className="text-base font-bold text-slate-500">min</span>
@@ -1425,10 +1372,11 @@ export default function AdminDashboard() {
                                   {hasStarted ? (
                                     <>
                                       <div
-                                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border ${isLate
+                                        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border ${
+                                          isLate
                                             ? "bg-rose-50 text-rose-700 border-rose-200"
                                             : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                          }`}
+                                        }`}
                                       >
                                         {isLate
                                           ? `⚠️ Atrasado (${Math.abs(remainingMin)} min)`
@@ -1484,10 +1432,11 @@ export default function AdminDashboard() {
                           <button
                             key={st}
                             onClick={() => setHistoryStatusFilter(st)}
-                            className={`text-xs px-2.5 py-1 rounded-lg font-bold transition-all ${historyStatusFilter === st
+                            className={`text-xs px-2.5 py-1 rounded-lg font-bold transition-all ${
+                              historyStatusFilter === st
                                 ? "bg-slate-900 text-white"
                                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              }`}
+                            }`}
                           >
                             {st === "ALL" ? "Todos" : st === "FINISHED" ? "Concluídos" : "Cancelados"}
                           </button>
@@ -1509,10 +1458,11 @@ export default function AdminDashboard() {
                                   {formatOrderCode(o.id, o.createdAt)}
                                 </span>
                                 <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${o.status === "FINISHED" || o.status === "COMPLETED"
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    o.status === "FINISHED" || o.status === "COMPLETED"
                                       ? "bg-emerald-100 text-emerald-800"
                                       : "bg-rose-100 text-rose-800"
-                                    }`}
+                                  }`}
                                 >
                                   {o.status === "FINISHED" || o.status === "COMPLETED" ? "CONCLUÍDO" : "CANCELADO"}
                                 </span>
@@ -1585,5 +1535,21 @@ export default function AdminDashboard() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-950">
+          <div className="text-sm font-bold text-slate-400 animate-pulse">
+            Carregando painel...
+          </div>
+        </div>
+      }
+    >
+      <AdminDashboardContent />
+    </Suspense>
   );
 }
