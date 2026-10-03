@@ -227,28 +227,27 @@ export default function AdminDashboard() {
 
       const [metricsRes, ordersRes, customersRes, commRes, productsRes, prodRes] = await Promise.all([
         api
-          .get(`api/orders/analytics/dashboard?range=${timeRange}&storeId=${storeId}`, config)
+          .get(`/api/orders/analytics/dashboard?range=${timeRange}&storeId=${storeId}`, config)
           .catch(() => ({ data: defaultMetrics })),
         api
-          .get(`/orders?storeId=${storeId}`, config)
+          .get(`/api/orders?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
         api
-          .get(`/customers?storeId=${storeId}`, config)
+          .get(`/api/customers?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
         api
           .get(
-            `/orders/analytics/commissions?range=${timeRange}&storeId=${storeId}&userId=${userObj?.id}&role=${userObj?.role}`,
+            `/api/orders/analytics/commissions?range=${timeRange}&storeId=${storeId}&userId=${userObj?.id}&role=${userObj?.role}`,
             config
           )
           .catch(() => ({ data: { summary: {}, sellers: [] } })),
         api
-          .get(`/products?storeId=${storeId}`, config)
+          .get(`/api/products?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
         api
-          .get(`/orders/analytics/production?range=${timeRange}&storeId=${storeId}`, config)
+          .get(`/api/orders/analytics/production?range=${timeRange}&storeId=${storeId}`, config)
           .catch(() => ({ data: null })),
       ]);
-
       setMetrics(metricsRes.data || defaultMetrics);
       setOrders(ordersRes.data || []);
       setCustomers(customersRes.data || []);
@@ -287,7 +286,7 @@ export default function AdminDashboard() {
 
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
-      await api.patch(`api/orders/${orderId}/status`, { status: newStatus });
+      await api.patch(`/api/orders/${orderId}/status`, { status: newStatus });
       loadAllData();
     } catch (err: any) {
       alert("Erro ao atualizar status: " + err.message);
