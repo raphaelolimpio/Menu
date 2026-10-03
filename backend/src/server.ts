@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3333;
 
 app.set('trust proxy', 1);
 
-// Middleware manual de CORS prioritário absoluto
+// Middleware manual de CORS prioritário
 app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
 
@@ -30,11 +30,30 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   );
 
   if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
+    return res.sendStatus(204);
   }
 
   next();
+});
+
+// Garante tratamento de OPTIONS em qualquer endpoint da aplicação
+app.options('*', (req: Request, res: Response) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
+  res.sendStatus(204);
 });
 
 app.use(express.json());
