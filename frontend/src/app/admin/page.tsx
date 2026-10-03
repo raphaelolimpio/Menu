@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ExcelJS from "exceljs";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import api, { API_URL } from "@/services/api";
@@ -97,10 +97,12 @@ export default function AdminDashboard() {
   const [openMenuOrderId, setOpenMenuOrderId] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [store, setStore] = useState<any>(null);
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as any;
 
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "orders" | "history" | "contacts" | "products" | "commissions" | "production"
-  >("dashboard");
+  >(tabParam || "dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [productionMetrics, setProductionMetrics] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -122,6 +124,14 @@ export default function AdminDashboard() {
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  
+
+  useEffect(() => {
+    if (tabParam && ["dashboard", "orders", "history", "contacts", "products", "commissions", "production"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);

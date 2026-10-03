@@ -32,7 +32,7 @@ function HomeContent() {
     const storedStore = localStorage.getItem("store");
 
     if (storedUser) {
-      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) {}
+      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) { }
     }
 
     let targetStoreId = storeParam;
@@ -41,7 +41,7 @@ function HomeContent() {
         const parsedStore = JSON.parse(storedStore);
         targetStoreId = parsedStore.id;
         setActiveStore(parsedStore);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (targetStoreId) {
@@ -141,7 +141,7 @@ function HomeContent() {
               </p>
               {currentUser?.role === "OWNER" && (
                 <Link
-                  href="/admin"
+                  href="/admin?tab=products"
                   className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all"
                 >
                   <PlusCircle className="w-4 h-4" />
@@ -155,7 +155,6 @@ function HomeContent() {
     );
   }
 
-  // Se for visitante genérico sem vínculo de loja: Exibe a Landing Page de Apresentação
   return (
     <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-100 selection:bg-emerald-400 selection:text-slate-950">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
