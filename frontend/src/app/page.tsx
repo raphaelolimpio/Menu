@@ -27,7 +27,7 @@ function HomeContent() {
     if (storedUser && storedToken) {
       try {
         const parsed = JSON.parse(storedUser);
-        
+
       } catch (e) {
         console.error("Erro ao validar sessão persistida", e);
       }
@@ -87,13 +87,13 @@ function HomeContent() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#como-funciona"
+              <Link
+                href={storeParam ? `/products?store=${storeParam}` : "/products"}
                 className="flex min-h-14 items-center justify-center gap-2.5 rounded-2xl bg-emerald-400 px-6 text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300/30"
               >
                 Conhecer o catálogo
                 <ArrowRight className="h-5 w-5" />
-              </a>
+              </Link>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-300">

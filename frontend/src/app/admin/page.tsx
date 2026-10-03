@@ -617,7 +617,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Ícone: Abrir Catálogo 3D */}
             <Link
-              href="/"
+              href={store?.id ? `/products?store=${store.id}` : "/products"}
               title="Ver Catálogo 3D"
               className="p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-600 transition-colors shadow-2xs"
             >
