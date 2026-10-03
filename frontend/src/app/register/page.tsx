@@ -53,7 +53,7 @@ export default function RegisterPage() {
         localStorage.setItem("user", JSON.stringify(res.data.user));
         localStorage.setItem("store", JSON.stringify(res.data.store));
 
-        // Notifica componentes globais (ex: Navbar)
+
         window.dispatchEvent(new Event("storage-updated"));
 
         router.push("/admin");
