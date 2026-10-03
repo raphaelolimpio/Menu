@@ -230,22 +230,22 @@ export default function AdminDashboard() {
           .get(`api/orders/analytics/dashboard?range=${timeRange}&storeId=${storeId}`, config)
           .catch(() => ({ data: defaultMetrics })),
         api
-          .get(`http://localhost:3333/api/orders?storeId=${storeId}`, config)
+          .get(`/orders?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
         api
-          .get(`http://localhost:3333/api/customers?storeId=${storeId}`, config)
+          .get(`/customers?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
         api
           .get(
-            `http://localhost:3333/api/orders/analytics/commissions?range=${timeRange}&storeId=${storeId}&userId=${userObj?.id}&role=${userObj?.role}`,
+            `/orders/analytics/commissions?range=${timeRange}&storeId=${storeId}&userId=${userObj?.id}&role=${userObj?.role}`,
             config
           )
           .catch(() => ({ data: { summary: {}, sellers: [] } })),
         api
-          .get(`http://localhost:3333/api/products?storeId=${storeId}`, config)
+          .get(`/products?storeId=${storeId}`, config)
           .catch(() => ({ data: [] })),
         api
-          .get(`http://localhost:3333/api/orders/analytics/production?range=${timeRange}&storeId=${storeId}`, config)
+          .get(`/orders/analytics/production?range=${timeRange}&storeId=${storeId}`, config)
           .catch(() => ({ data: null })),
       ]);
 
@@ -1532,7 +1532,7 @@ export default function AdminDashboard() {
                             <div className="flex gap-2">
                               {o.pdfUrl ? (
                                 <a
-                                  href={`http://localhost:3333/api${o.pdfUrl.startsWith("/") ? o.pdfUrl : `/${o.pdfUrl}`}`}
+                                  href={`${API_URL}/api${o.pdfUrl.startsWith("/") ? o.pdfUrl : `/${o.pdfUrl}`}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors"
