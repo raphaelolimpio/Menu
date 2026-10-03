@@ -89,16 +89,16 @@ const formatOrderCode = (id: number, dateStr: string) => {
   return `PED-${year}-${String(id).padStart(4, "0")}`;
 };
 
-export default function AdminDashboard() {
+export function AdminDashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as any;
   const { cart } = useCart();
   const [products, setProducts] = useState<any[]>([]);
   const [authLoading, setAuthLoading] = useState(true);
   const [openMenuOrderId, setOpenMenuOrderId] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [store, setStore] = useState<any>(null);
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab") as any;
 
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "orders" | "history" | "contacts" | "products" | "commissions" | "production"
@@ -1585,5 +1585,20 @@ export default function AdminDashboard() {
         </main>
       </div>
     </div>
+  );
+}
+export default function AdminDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-950">
+          <div className="text-sm font-bold text-slate-400 animate-pulse">
+            Carregando painel...
+          </div>
+        </div>
+      }
+    >
+      <AdminDashboardContent />
+    </Suspense>
   );
 }
