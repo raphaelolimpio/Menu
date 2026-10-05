@@ -24,6 +24,7 @@ export default function Navbar() {
     "/reset-password",
     "/linha-producao",
     "/producao",
+    "/cart",
   ];
 
   const isHidden = hiddenRoutes.some((route) => pathname?.startsWith(route));
