@@ -81,7 +81,7 @@ export default function ProfileAndTeamPage() {
 
     try {
       setUser(JSON.parse(storedUser));
-    } catch {}
+    } catch { }
 
     if (storedStore) {
       try {
@@ -101,23 +101,65 @@ export default function ProfileAndTeamPage() {
   }, [router]);
 
   useEffect(() => {
-  const loadStoredNotifs = () => {
-    const stored = localStorage.getItem("system_notifications");
-    if (stored) {
+    const loadRealNotifications = async () => {
       try {
-        setNotifications(JSON.parse(stored));
+        const storedStore = localStorage.getItem("store");
+        const storeId = storedStore ? JSON.parse(storedStore).id : "";
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await api.get(`/api/orders?storeId=${storeId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const orders = res.data || [];
+        if (orders.length === 0) {
+          setNotifications([]);
+          return;
+        }
+
+        const storageKey = storeId ? `read_notifications_${storeId}` : "read_notifications_ids";
+        const readIds: string[] = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+        const dynamic = orders.slice(0, 8).map((o: any) => {
+          const year = new Date(o.createdAt).getFullYear() || 2026;
+          const orderCode = `PED-${year}-${String(o.id).padStart(4, "0")}`;
+          const notifId = `order-${o.id}-${o.productionStep || o.status}`;
+          const isRead = readIds.includes(notifId);
+
+          let title = `Novo Pedido Emitido: ${orderCode}`;
+          let desc = `Cliente ${o.customer?.name || "Consumidor"} — R$ ${Number(o.totalAmount || 0).toFixed(2)}`;
+
+          if (o.productionStep === "PRONTO_ENTREGA") {
+            title = `Ordem Concluída: ${orderCode}`;
+            desc = "Lote pronto para expedição e entrega ao cliente.";
+          } else if (o.productionStep && o.productionStep !== "AGUARDANDO") {
+            title = `Em Produção: ${orderCode}`;
+            desc = `Peça em etapa fabril: ${o.productionStep}.`;
+          }
+
+          const orderDate = new Date(o.createdAt);
+          const timeFormatted = orderDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+          return {
+            id: notifId,
+            title,
+            desc,
+            time: `${orderDate.toLocaleDateString("pt-BR")} às ${timeFormatted}`,
+            read: isRead,
+          };
+        });
+
+        setNotifications(dynamic);
       } catch {
         setNotifications([]);
       }
-    } else {
-      setNotifications([]);
-    }
-  };
+    };
 
-  loadStoredNotifs();
-  window.addEventListener("notifications-updated", loadStoredNotifs);
-  return () => window.removeEventListener("notifications-updated", loadStoredNotifs);
-}, []);
+    loadRealNotifications();
+    window.addEventListener("notifications-updated", loadRealNotifications);
+    return () => window.removeEventListener("notifications-updated", loadRealNotifications);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -306,9 +348,8 @@ export default function ProfileAndTeamPage() {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           <div className="h-20 flex items-center justify-between px-6 border-b border-slate-900 bg-slate-950">
@@ -479,14 +520,12 @@ export default function ProfileAndTeamPage() {
                       notifications.map((n) => (
                         <div
                           key={n.id}
-                          className={`p-3.5 flex gap-3 transition-colors ${
-                            n.read ? "bg-white" : "bg-emerald-50/20"
-                          }`}
+                          className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"
+                            }`}
                         >
                           <span
-                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                              n.read ? "bg-slate-300" : "bg-emerald-500"
-                            }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"
+                              }`}
                           />
                           <div className="flex-1">
                             <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
@@ -614,7 +653,7 @@ export default function ProfileAndTeamPage() {
         {/* CONTEÚDO PRINCIPAL */}
         <main className="flex-1 overflow-y-auto px-6 sm:px-8 py-4">
           <div className="max-w-6xl mx-auto space-y-6">
-            
+
             {/* CARD DO OPERADOR & CONVITE */}
             <div className="bg-slate-950 text-white rounded-2xl p-6 shadow-xs border border-slate-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex items-center gap-5">
@@ -769,11 +808,10 @@ export default function ProfileAndTeamPage() {
                               <div className="flex items-center gap-2">
                                 <h4 className="text-sm font-black text-slate-900">{member.name}</h4>
                                 <span
-                                  className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
-                                    member.status === "ACTIVE"
+                                  className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${member.status === "ACTIVE"
                                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                       : "bg-amber-50 text-amber-700 border-amber-200"
-                                  }`}
+                                    }`}
                                 >
                                   {member.status === "ACTIVE" ? "ATIVO" : "PENDENTE"}
                                 </span>

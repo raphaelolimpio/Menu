@@ -156,28 +156,8 @@ export default function CheckoutModal({
       const orderData = res.data;
       setOrderResult(orderData); 
 
-      // ========================================================
-      // DISPARA A NOTIFICAÇÃO GLOBAL NO SISTEMA
-      // ========================================================
-      try {
-        const orderIdFormatted = `PED-${new Date().getFullYear()}-${String(orderData.id || "").padStart(4, "0")}`;
-        const newNotif = {
-          id: String(Date.now()),
-          title: `Novo Pedido Emitido: ${orderIdFormatted}`,
-          desc: `Cliente ${selectedCustomer.name} via ${paymentMethod} (R$ ${Number(totalAmount).toFixed(2)}).`,
-          time: "Agora",
-          read: false,
-        };
-
-        const stored = localStorage.getItem("system_notifications");
-        const currentList = stored ? JSON.parse(stored) : [];
-        const updatedList = [newNotif, ...currentList.filter((n: any) => n.id !== newNotif.id)];
-        
-        localStorage.setItem("system_notifications", JSON.stringify(updatedList));
-        window.dispatchEvent(new Event("notifications-updated"));
-      } catch (e) {
-        console.error("Erro ao registrar notificação:", e);
-      }
+      window.dispatchEvent(new Event("notifications-updated"));
+      window.dispatchEvent(new Event("storage-updated"));
 
       onOrderCompleted();
     } catch (err: any) {
