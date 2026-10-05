@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import routes from './routes';
@@ -9,34 +10,15 @@ const PORT = process.env.PORT || 3333;
 
 app.set('trust proxy', 1);
 
-// Middleware manual estrito de CORS aplicado a todas as rotas
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const origin = req.headers.origin;
-
-  if (origin) {
-    res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    res.header('Access-Control-Allow-Origin', '*');
-  }
-
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header(
-    'Access-Control-Allow-Methods',
-    'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
-  );
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-  res.header('Access-Control-Max-Age', '86400');
-
-  // Trata o preflight OPTIONS garantindo a entrega dos headers e status 204
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
-  next();
-});
+// Middleware CORS oficial: responde automaticamente ao preflight OPTIONS e reflete o domínio da Vercel
+app.use(
+  cors({
+    origin: (origin, callback) => callback(null, true),
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  })
+);
 
 app.use(express.json());
 
