@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -9,11 +8,9 @@ import api, { API_URL } from "@/services/api";
 import {
   Copy,
   Users,
-  CheckCircle2,
   ArrowLeft,
   Palette,
   Store as StoreIcon,
-  Phone,
   Save,
   Camera,
   Upload,
@@ -40,32 +37,7 @@ import {
   Settings,
   UserCheck,
   UserX,
-  SlidersHorizontal
 } from "lucide-react";
-
-const DEFAULT_NOTIFICATIONS = [
-  {
-    id: "1",
-    title: "Nova Ordem de Produção",
-    desc: "Pedido aguardando corte no chão de fábrica.",
-    time: "Há 10 min",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Etapa de Manufatura Concluída",
-    desc: "Um lote foi concluído e está pronto para expedição.",
-    time: "Há 45 min",
-    read: false,
-  },
-  {
-    id: "3",
-    title: "Proposta Aprovada",
-    desc: "Cliente aprovou o orçamento 3D via link público.",
-    time: "Há 2 horas",
-    read: true,
-  },
-];
 
 export default function ProfileAndTeamPage() {
   const router = useRouter();
@@ -89,12 +61,10 @@ export default function ProfileAndTeamPage() {
   // Filtro de Vendedores
   const [sellerSearch, setSellerSearch] = useState("");
 
-  // Estados dos Pop-ups do Header
+  // Pop-ups do Cabeçalho
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  // Notificações com Sincronização Global
-  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -109,48 +79,41 @@ export default function ProfileAndTeamPage() {
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser);
-    setUser(parsedUser);
+    try {
+      setUser(JSON.parse(storedUser));
+    } catch {}
 
     if (storedStore) {
-      const parsedStore = JSON.parse(storedStore);
-      setStore(parsedStore);
-      setStoreDisplayName(parsedStore.name || "");
-      setStoreBrandColor(parsedStore.themeColor || "#0F172A");
-      setStorePhone(parsedStore.phone || "");
-      setStoreGreeting(parsedStore.greeting || "");
-      loadTeam(parsedStore.id);
+      try {
+        const parsedStore = JSON.parse(storedStore);
+        setStore(parsedStore);
+        setStoreDisplayName(parsedStore.name || "");
+        setStoreBrandColor(parsedStore.themeColor || "#0F172A");
+        setStorePhone(parsedStore.phone || "");
+        setStoreGreeting(parsedStore.greeting || "");
+        loadTeam(parsedStore.id);
+      } catch {
+        setLoading(false);
+      }
     } else {
       setLoading(false);
     }
   }, [router]);
 
-  // Sincroniza notificações via localStorage e eventos globais
   useEffect(() => {
-    const syncNotifications = () => {
+    const loadStoredNotifs = () => {
       const stored = localStorage.getItem("system_notifications");
       if (stored) {
         try {
           setNotifications(JSON.parse(stored));
-        } catch {
-          setNotifications(DEFAULT_NOTIFICATIONS);
-        }
-      } else {
-        localStorage.setItem("system_notifications", JSON.stringify(DEFAULT_NOTIFICATIONS));
+        } catch {}
       }
     };
-
-    syncNotifications();
-    window.addEventListener("notifications-updated", syncNotifications);
-    window.addEventListener("storage", syncNotifications);
-
-    return () => {
-      window.removeEventListener("notifications-updated", syncNotifications);
-      window.removeEventListener("storage", syncNotifications);
-    };
+    loadStoredNotifs();
+    window.addEventListener("notifications-updated", loadStoredNotifs);
+    return () => window.removeEventListener("notifications-updated", loadStoredNotifs);
   }, []);
 
-  // Fechar pop-ups ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -160,7 +123,6 @@ export default function ProfileAndTeamPage() {
         setIsNotifOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -171,7 +133,7 @@ export default function ProfileAndTeamPage() {
       const res = await api.get(`/api/auth/team/${storeId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTeam(res.data);
+      setTeam(res.data || []);
     } catch (error) {
       console.error("Erro ao carregar equipe:", error);
     } finally {
@@ -247,7 +209,7 @@ export default function ProfileAndTeamPage() {
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
         window.dispatchEvent(new Event("storage-updated"));
-        alert("Foto de perfil atualizada com sucesso!");
+        alert("Foto de perfil atualizada!");
       } else {
         await api.patch(`/api/stores/${store.id}`, { logoUrl: imageUrl }, {
           headers: { Authorization: `Bearer ${token}` }
@@ -256,7 +218,7 @@ export default function ProfileAndTeamPage() {
         localStorage.setItem("store", JSON.stringify(updatedStore));
         setStore(updatedStore);
         window.dispatchEvent(new Event("storage-updated"));
-        alert("Logomarca da loja atualizada com sucesso!");
+        alert("Logomarca atualizada!");
       }
     } catch (err) {
       console.error(err);
@@ -292,8 +254,8 @@ export default function ProfileAndTeamPage() {
       setTimeout(() => {
         setSaveSuccess(false);
         setIsStoreModalOpen(false);
-      }, 1200);
-    } catch (error) {
+      }, 1000);
+    } catch {
       alert("Erro ao salvar configurações da loja.");
     }
   };
@@ -308,7 +270,6 @@ export default function ProfileAndTeamPage() {
     { id: "contacts", label: "Clientes", icon: Users },
   ];
 
-  // Filtro de Vendedores
   const filteredTeam = team.filter((member) => {
     const term = sellerSearch.toLowerCase();
     const nameMatch = (member.name || "").toLowerCase().includes(term);
@@ -317,13 +278,13 @@ export default function ProfileAndTeamPage() {
   });
 
   const activeSellersCount = team.filter((m) => m.status === "ACTIVE").length;
-  const pendingSellersCount = team.filter((m) => m.status === "PENDING").length;
+  const pendingSellersCount = team.filter((m) => m.status === "PENDING" || m.status === "PENDING_APPROVAL").length;
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="text-sm font-bold text-slate-400 animate-pulse">
-          Validando permissões de acesso...
+          Carregando informações da equipe...
         </div>
       </div>
     );
@@ -331,7 +292,6 @@ export default function ProfileAndTeamPage() {
 
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
-      {/* OVERLAY MOBILE PARA SIDEBAR */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-slate-950/60 z-40 lg:hidden backdrop-blur-xs transition-opacity"
@@ -339,14 +299,13 @@ export default function ProfileAndTeamPage() {
         />
       )}
 
-      {/* SIDEBAR PADRÃO ERP */}
+      {/* SIDEBAR */}
       <aside
         className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
-          {/* Logo e Nome do Sistema na Sidebar */}
           <div className="h-20 flex items-center justify-between px-6 border-b border-slate-900 bg-slate-950">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -365,7 +324,6 @@ export default function ProfileAndTeamPage() {
             </button>
           </div>
 
-          {/* Menus Principais */}
           <nav className="p-4 space-y-1">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 block mb-2 mt-2">
               Menu Principal
@@ -378,7 +336,7 @@ export default function ProfileAndTeamPage() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => router.push(`/admin`)}
+                  onClick={() => router.push(`/admin?tab=${item.id}`)}
                   className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-left text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                 >
                   <div className="flex items-center gap-3">
@@ -389,20 +347,16 @@ export default function ProfileAndTeamPage() {
               );
             })}
 
-            
-
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 block pt-5 pb-2">
               Configurações
             </span>
 
-            {/* ABA ATIVA */}
             <div className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-black bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10">
               <Users className="w-4 h-4 text-slate-950" /> Minha Equipe & Loja
             </div>
           </nav>
         </div>
 
-        {/* Informações do Usuário no Rodapé da Sidebar */}
         <div className="p-4 border-t border-slate-900 bg-slate-950/70">
           <div className="flex items-center gap-3 px-1 mb-3">
             <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -429,13 +383,10 @@ export default function ProfileAndTeamPage() {
         </div>
       </aside>
 
-      {/* PAINEL PRINCIPAL DE CONTEÚDO */}
+      {/* ÁREA DE CONTEÚDO */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        
-        {/* CABEÇALHO SUPERIOR PADRONIZADO */}
+        {/* CABEÇALHO SUPERIOR */}
         <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-20 shrink-0 shadow-2xs">
-          
-          {/* LADO ESQUERDO: HAMBÚRGUER + LOGOMARCA */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -445,33 +396,21 @@ export default function ProfileAndTeamPage() {
             </button>
 
             <div className="flex items-center gap-2">
-              {store?.logoUrl ? (
-                <img
-                  src={store.logoUrl}
-                  alt={store.name || "Logo"}
-                  className="h-8 max-w-[140px] sm:max-w-[170px] object-contain rounded-md"
-                />
-              ) : (
-                <span className="text-xs font-black text-slate-900 tracking-tight uppercase">
-                  {store?.name || "Catálogo 3D"}
-                </span>
-              )}
+              <span className="text-xs font-black text-slate-900 tracking-tight uppercase">
+                {store?.name || "Catálogo 3D"}
+              </span>
             </div>
           </div>
 
-          {/* LADO DIREITO: ÍCONES RÁPIDOS + NOTIFICAÇÕES + AVATAR POP-UP */}
           <div className="flex items-center gap-2 sm:gap-3">
-
-            {/* Ícone: Abrir Catálogo 3D */}
             <Link
-              href="/"
+              href={store?.id ? `/?store=${store.id}` : "/"}
               title="Ver Catálogo 3D"
               className="p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-600 transition-colors shadow-2xs"
             >
               <Box className="w-4 h-4" />
             </Link>
 
-            {/* Ícone: Carrinho com Badge Dinâmico */}
             <Link
               href="/cart"
               title="Ver Carrinho de Compras"
@@ -487,7 +426,7 @@ export default function ProfileAndTeamPage() {
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
-            {/* SINO DE NOTIFICAÇÕES SINCRONIZADO */}
+            {/* NOTIFICAÇÕES */}
             <div className="relative" ref={notifRef}>
               <button
                 type="button"
@@ -529,31 +468,35 @@ export default function ProfileAndTeamPage() {
                   </div>
 
                   <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                    {notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`p-3.5 flex gap-3 transition-colors ${
-                          n.read ? "bg-white" : "bg-emerald-50/20"
-                        }`}
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                            n.read ? "bg-slate-300" : "bg-emerald-500"
+                    {notifications.length === 0 ? (
+                      <p className="p-6 text-center text-xs text-slate-400">Nenhuma notificação no momento.</p>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`p-3.5 flex gap-3 transition-colors ${
+                            n.read ? "bg-white" : "bg-emerald-50/20"
                           }`}
-                        />
-                        <div className="flex-1">
-                          <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
-                          <span className="text-[9px] font-mono text-slate-400 mt-1 block">{n.time}</span>
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                              n.read ? "bg-slate-300" : "bg-emerald-500"
+                            }`}
+                          />
+                          <div className="flex-1">
+                            <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
+                            <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
+                            <span className="text-[9px] font-mono text-slate-400 mt-1 block">{n.time}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* AVATAR COM POP-UP DETALHADO */}
+            {/* PERFIL AVATAR */}
             <div className="relative" ref={profileRef}>
               <button
                 type="button"
@@ -573,7 +516,6 @@ export default function ProfileAndTeamPage() {
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
               </button>
 
-              {/* POP-UP DO USUÁRIO */}
               {isProfileOpen && user && (
                 <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                   <div className="p-4 bg-slate-50/80 border-b border-slate-100 flex items-center gap-3">
@@ -614,16 +556,16 @@ export default function ProfileAndTeamPage() {
                     <button
                       type="button"
                       onClick={() => setIsProfileOpen(false)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50/70 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50/70 transition-colors text-left"
                     >
                       <User className="w-4 h-4 text-emerald-600" />
-                      <span>Meu Perfil & Loja (Atual)</span>
+                      <span>Meu Perfil & Loja</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left"
                     >
                       <LogOut className="w-4 h-4 text-rose-500" />
                       <span>Encerrar Sessão</span>
@@ -632,19 +574,18 @@ export default function ProfileAndTeamPage() {
                 </div>
               )}
             </div>
-
           </div>
         </header>
 
-        {/* Sub-Cabeçalho com Ação de Voltar */}
+        {/* SUB-CABEÇALHO */}
         <div className="px-6 sm:px-8 pt-6 pb-2 shrink-0 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-2">
               <Link
                 href="/admin"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors mr-1"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition-colors shadow-2xs mr-1"
               >
-                <ArrowLeft className="w-3.5 h-3.5" /> Painel
+                <ArrowLeft className="w-3.5 h-3.5" /> Voltar ao Painel
               </Link>
               <h1 className="text-xl font-black text-slate-900 tracking-tight">GESTÃO DE EQUIPE & VENDEDORES</h1>
             </div>
@@ -653,7 +594,6 @@ export default function ProfileAndTeamPage() {
             </p>
           </div>
 
-          {/* BOTÃO PARA ACESSAR A EDIÇÃO DA LOJA (MODAL) */}
           {user?.role === "OWNER" && (
             <button
               type="button"
@@ -666,11 +606,11 @@ export default function ProfileAndTeamPage() {
           )}
         </div>
 
-        {/* Área Rolável de Conteúdo */}
+        {/* CONTEÚDO PRINCIPAL */}
         <main className="flex-1 overflow-y-auto px-6 sm:px-8 py-4">
           <div className="max-w-6xl mx-auto space-y-6">
             
-            {/* CARTÃO DE DESTAQUE: PERFIL DO OPERADOR E CÓDIGO DA LOJA */}
+            {/* CARD DO OPERADOR & CONVITE */}
             <div className="bg-slate-950 text-white rounded-2xl p-6 shadow-xs border border-slate-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex items-center gap-5">
                 <div className="relative w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 shrink-0 flex items-center justify-center overflow-hidden group shadow-inner">
@@ -682,9 +622,9 @@ export default function ProfileAndTeamPage() {
 
                   <label
                     className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-all"
-                    title="Alterar sua foto de perfil"
+                    title="Clique para enviar nova foto"
                   >
-                    <Camera className="w-6 h-6 text-white" />
+                    <Camera className="w-6 h-6 text-emerald-400" />
                     <input
                       type="file"
                       accept="image/*"
@@ -703,9 +643,20 @@ export default function ProfileAndTeamPage() {
                   </span>
                   <h2 className="text-xl font-black mt-2 tracking-tight">{store?.name || "Minha Loja 3D"}</h2>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Operador: <strong className="text-white">{user?.name}</strong> ({user?.email}) •{" "}
-                    <span className="text-emerald-400 font-medium">Passe o cursor na foto para editar</span>
+                    Operador: <strong className="text-white">{user?.name}</strong> ({user?.email})
                   </p>
+                  <label className="text-[11px] text-emerald-400 hover:underline cursor-pointer font-bold inline-block mt-1">
+                    {uploading ? "Enviando..." : "Alterar foto de perfil"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) handleUploadImage("avatar", e.target.files[0]);
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -734,11 +685,9 @@ export default function ProfileAndTeamPage() {
               )}
             </div>
 
-            {/* SEÇÃO PRINCIPAL: FOCO NA EQUIPE & VENDEDORES */}
+            {/* GESTÃO DE VENDEDORES */}
             {user?.role === "OWNER" && (
               <div className="space-y-4">
-                
-                {/* CARDS MACRO DA EQUIPE */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-white p-4.5 border border-slate-200/90 rounded-2xl shadow-xs">
                     <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block font-mono">
@@ -767,10 +716,7 @@ export default function ProfileAndTeamPage() {
                   </div>
                 </div>
 
-                {/* TABELA / LISTA DETALHADA DA EQUIPE */}
                 <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
-                  
-                  {/* Cabeçalho da Lista com Filtro de Busca */}
                   <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-slate-50/60">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-emerald-600" />
@@ -791,12 +737,11 @@ export default function ProfileAndTeamPage() {
                     </div>
                   </div>
 
-                  {/* Lista de Membros */}
                   <div className="divide-y divide-slate-100">
                     {filteredTeam.length === 0 ? (
                       <div className="p-12 text-center text-slate-400">
                         <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs font-bold">Nenhum vendedor encontrado.</p>
+                        <p className="text-xs font-bold text-slate-700">Nenhum vendedor encontrado.</p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                           Compartilhe o código de convite da loja para receber novas solicitações.
                         </p>
@@ -807,7 +752,6 @@ export default function ProfileAndTeamPage() {
                           key={member.id}
                           className="p-5 flex flex-col lg:flex-row justify-between lg:items-center gap-4 hover:bg-slate-50/50 transition-colors"
                         >
-                          {/* Identificação do Vendedor */}
                           <div className="flex items-center gap-3.5">
                             <div className="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-700 text-xs shrink-0 overflow-hidden shadow-2xs">
                               {member.avatarUrl ? (
@@ -833,10 +777,7 @@ export default function ProfileAndTeamPage() {
                             </div>
                           </div>
 
-                          {/* Ajuste de Comissão, Desconto e Status */}
                           <div className="flex items-center gap-4 flex-wrap">
-                            
-                            {/* Input de Comissão */}
                             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
                               <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">Comissão:</span>
                               <input
@@ -855,7 +796,6 @@ export default function ProfileAndTeamPage() {
                               <span className="text-xs font-bold text-slate-400">%</span>
                             </div>
 
-                            {/* Input de Desconto Máximo */}
                             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
                               <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">Desc. Máx:</span>
                               <input
@@ -874,9 +814,8 @@ export default function ProfileAndTeamPage() {
                               <span className="text-xs font-bold text-slate-400">%</span>
                             </div>
 
-                            {/* Ações de Status */}
                             <div className="flex items-center gap-2">
-                              {member.status === "PENDING" && (
+                              {(member.status === "PENDING" || member.status === "PENDING_APPROVAL") && (
                                 <button
                                   type="button"
                                   onClick={() => handleUpdateSeller(member.id, "ACTIVE")}
@@ -909,29 +848,22 @@ export default function ProfileAndTeamPage() {
                                 )
                               )}
                             </div>
-
                           </div>
                         </div>
                       ))
                     )}
                   </div>
                 </div>
-
               </div>
             )}
-
           </div>
         </main>
       </div>
 
-      {/* ========================================================================= */}
-      {/* MODAL DE EDIÇÃO DA IDENTIDADE DA LOJA (SOB DEMANDA)                      */}
-      {/* ========================================================================= */}
+      {/* MODAL CONFIGURAÇÃO DE LOJA */}
       {isStoreModalOpen && user?.role === "OWNER" && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in-50 duration-150">
-            
-            {/* Topo do Modal */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
@@ -939,7 +871,7 @@ export default function ProfileAndTeamPage() {
                 </div>
                 <div>
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                    Identidade Visual & Configurações da Empresa
+                    Identidade Visual da Empresa
                   </h3>
                   <p className="text-[11px] text-slate-400">Personalização white-label da fábrica</p>
                 </div>
@@ -953,7 +885,6 @@ export default function ProfileAndTeamPage() {
               </button>
             </div>
 
-            {/* Conteúdo do Formulário */}
             <form onSubmit={handleSaveStoreCustomization} className="p-6 space-y-5">
               {saveSuccess && (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2">
@@ -961,7 +892,6 @@ export default function ProfileAndTeamPage() {
                 </div>
               )}
 
-              {/* Upload da Logo */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                 <div className="w-32 h-16 bg-white border border-slate-200 rounded-xl flex items-center justify-center overflow-hidden shrink-0 p-1 shadow-2xs">
                   {store?.logoUrl ? (
@@ -974,12 +904,12 @@ export default function ProfileAndTeamPage() {
                 <div className="flex-1">
                   <span className="text-xs font-bold text-slate-800 block">Logomarca Oficial</span>
                   <span className="text-[11px] text-slate-400 block mb-2">
-                    Exibida no catálogo, topo do ERP e propostas comerciais em PDF.
+                    Exibida no catálogo e nos pedidos em PDF.
                   </span>
 
                   <label className="cursor-pointer bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold py-2 px-3.5 rounded-xl inline-flex items-center gap-2 transition-colors shadow-2xs">
                     <Upload className="w-3.5 h-3.5" />
-                    {uploading ? "Enviando imagem..." : "Carregar Nova Imagem"}
+                    {uploading ? "Enviando..." : "Carregar Nova Imagem"}
                     <input
                       type="file"
                       accept="image/*"
@@ -993,7 +923,6 @@ export default function ProfileAndTeamPage() {
                 </div>
               </div>
 
-              {/* Campos Textuais */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-700 mb-1.5 block">Nome Comercial da Loja</label>
@@ -1054,7 +983,6 @@ export default function ProfileAndTeamPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
