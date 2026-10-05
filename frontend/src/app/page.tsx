@@ -32,7 +32,7 @@ function HomeContent() {
     const storedStore = localStorage.getItem("store");
 
     if (storedUser) {
-      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) { }
+      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) {}
     }
 
     let targetStoreId = storeParam;
@@ -41,7 +41,7 @@ function HomeContent() {
         const parsedStore = JSON.parse(storedStore);
         targetStoreId = parsedStore.id;
         setActiveStore(parsedStore);
-      } catch (e) { }
+      } catch (e) {}
     }
 
     if (targetStoreId) {
@@ -64,11 +64,10 @@ function HomeContent() {
     }
   };
 
-  // Se existe uma loja selecionada (Dono logado ou link de cliente)
+  // 1. VISUALIZAÇÃO: VITRINE DA LOJA (COM PRODUTOS OU VAZIA)
   if (activeStore || storeParam) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-400 selection:text-slate-950">
-        {/* Topo da Loja */}
         <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-3">
@@ -97,7 +96,6 @@ function HomeContent() {
           </div>
         </header>
 
-        {/* Conteúdo do Catálogo */}
         <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
           {loading ? (
             <div className="py-24 text-center flex flex-col items-center justify-center text-slate-400">
@@ -130,7 +128,6 @@ function HomeContent() {
               ))}
             </div>
           ) : (
-            /* ESTADO VAZIO: Quando a loja ainda não tem produtos cadastrados */
             <div className="py-24 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 rounded-3xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-500 mb-4">
                 <Box className="w-8 h-8 text-slate-500" />
@@ -140,13 +137,13 @@ function HomeContent() {
                 Esta vitrine está pronta. Cadastre seus modelos 3D e produtos pelo painel de controle para que apareçam aqui.
               </p>
               {currentUser?.role === "OWNER" && (
-                <Link
+                <a
                   href="/admin?tab=products"
                   className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Cadastrar Produtos no Admin</span>
-                </Link>
+                </a>
               )}
             </div>
           )}
@@ -155,8 +152,9 @@ function HomeContent() {
     );
   }
 
+  // 2. VISUALIZAÇÃO: LANDING PAGE GENÉRICA
   return (
-    <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-100 selection:bg-emerald-400 selection:text-slate-950">
+    <div className="min-h-screen overflow-y-auto bg-slate-950 text-slate-100 selection:bg-emerald-400 selection:text-slate-950">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex min-h-11 items-center gap-3">
@@ -170,20 +168,20 @@ function HomeContent() {
           </Link>
 
           <nav className="flex items-center gap-2">
-            <Link
+            <a
               href="/register"
               className="flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-300 sm:px-4"
             >
               <UserPlus className="h-4 w-4" />
               <span>Criar conta</span>
-            </Link>
-            <Link
+            </a>
+            <a
               href="/login"
               className="flex min-h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3.5 text-sm font-bold text-white transition hover:border-emerald-300/30 hover:bg-white/10 sm:px-4"
             >
               <LogIn className="h-4 w-4 text-emerald-300" />
               <span>Entrar</span>
-            </Link>
+            </a>
           </nav>
         </div>
       </header>
@@ -207,13 +205,13 @@ function HomeContent() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
+              <a
                 href="/register"
                 className="flex min-h-14 items-center justify-center gap-2.5 rounded-2xl bg-emerald-400 px-6 text-base font-extrabold text-slate-950 shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300"
               >
                 Criar Minha Loja
                 <ArrowRight className="h-5 w-5" />
-              </Link>
+              </a>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-300">
