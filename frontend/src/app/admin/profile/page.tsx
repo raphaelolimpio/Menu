@@ -105,16 +105,19 @@ export default function ProfileAndTeamPage() {
       return;
     }
 
+    // 1. Carrega o cache inicial do navegador imediatamente
     try {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
 
-      // SINCRONIZA O USUÁRIO DA NUVEM (ATUALIZA AVATAR DO PC NO TELEMÓVEL E VICE-VERSA)
+      // Sincroniza dados frescos do Usuário (Avatar)
       api.get(`/api/users/${parsedUser.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then((res) => {
         if (res.data) {
           setUser(res.data);
+          setAvatarError(false);
+          setProfileAvatarError(false);
           localStorage.setItem("user", JSON.stringify(res.data));
         }
       }).catch(() => {});
@@ -130,12 +133,13 @@ export default function ProfileAndTeamPage() {
         setStoreGreeting(parsedStore.greeting || "");
         loadTeam(parsedStore.id);
 
-        // SINCRONIZA A LOJA DA NUVEM (ATUALIZA LOGOMARCA)
+        // Sincroniza dados frescos da Loja (Logomarca)
         api.get(`/api/stores/${parsedStore.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then((res) => {
           if (res.data) {
             setStore(res.data);
+            setLogoError(false);
             localStorage.setItem("store", JSON.stringify(res.data));
           }
         }).catch(() => {});

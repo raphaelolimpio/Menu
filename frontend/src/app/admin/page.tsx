@@ -182,12 +182,12 @@ function AdminDashboardContent() {
       const parsedUser = JSON.parse(userData);
       setCurrentUser(parsedUser);
 
-      // BUSCA O USUÁRIO ATUALIZADO NA NUVEM PARA REFLETIR O AVATAR EM QUALQUER DISPOSITIVO
       api.get(`/api/users/${parsedUser.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then((res) => {
         if (res.data) {
           setCurrentUser(res.data);
+          setAvatarError(false);
           localStorage.setItem("user", JSON.stringify(res.data));
         }
       }).catch(() => {});
@@ -198,12 +198,12 @@ function AdminDashboardContent() {
         const parsedStore = JSON.parse(storedStore);
         setStore(parsedStore);
 
-        // BUSCA A LOJA ATUALIZADA NA NUVEM PARA REFLETIR LOGOMARCA
         api.get(`/api/stores/${parsedStore.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then((res) => {
           if (res.data) {
             setStore(res.data);
+            setLogoError(false);
             localStorage.setItem("store", JSON.stringify(res.data));
           }
         }).catch(() => {});

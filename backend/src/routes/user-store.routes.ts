@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 const router = Router();
 const prisma = new PrismaClient();
 
-// ROTA NOVA: Retorna os dados atualizados do usuário (incluindo avatarUrl recente)
+// 1. Busca os dados atualizados do Usuário
 router.get('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -26,6 +26,24 @@ router.get('/users/:id', async (req, res) => {
     }
 
     return res.json(user);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Busca os dados atualizados da Loja (para sincronizar a logomarca)
+router.get('/stores/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const store = await prisma.store.findUnique({
+      where: { id },
+    });
+
+    if (!store) {
+      return res.status(404).json({ error: 'Loja não encontrada.' });
+    }
+
+    return res.json(store);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
