@@ -106,7 +106,18 @@ export default function ProfileAndTeamPage() {
     }
 
     try {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+
+      // SINCRONIZA O USUÁRIO DA NUVEM (ATUALIZA AVATAR DO PC NO TELEMÓVEL E VICE-VERSA)
+      api.get(`/api/users/${parsedUser.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then((res) => {
+        if (res.data) {
+          setUser(res.data);
+          localStorage.setItem("user", JSON.stringify(res.data));
+        }
+      }).catch(() => {});
     } catch {}
 
     if (storedStore) {
@@ -119,7 +130,10 @@ export default function ProfileAndTeamPage() {
         setStoreGreeting(parsedStore.greeting || "");
         loadTeam(parsedStore.id);
 
-        api.get(`/api/stores/${parsedStore.id}`).then((res) => {
+        // SINCRONIZA A LOJA DA NUVEM (ATUALIZA LOGOMARCA)
+        api.get(`/api/stores/${parsedStore.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then((res) => {
           if (res.data) {
             setStore(res.data);
             localStorage.setItem("store", JSON.stringify(res.data));
