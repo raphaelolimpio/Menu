@@ -32,7 +32,7 @@ function HomeContent() {
     const storedStore = localStorage.getItem("store");
 
     if (storedUser) {
-      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) {}
+      try { setCurrentUser(JSON.parse(storedUser)); } catch (e) { }
     }
 
     let targetStoreId = storeParam;
@@ -41,7 +41,7 @@ function HomeContent() {
         const parsedStore = JSON.parse(storedStore);
         targetStoreId = parsedStore.id;
         setActiveStore(parsedStore);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (targetStoreId) {
@@ -137,13 +137,13 @@ function HomeContent() {
                 Esta vitrine está pronta. Cadastre seus modelos 3D e produtos pelo painel de controle para que apareçam aqui.
               </p>
               {currentUser?.role === "OWNER" && (
-                <a
+                <Link
                   href="/admin?tab=products"
                   className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Cadastrar Produtos no Admin</span>
-                </a>
+                </Link>
               )}
             </div>
           )}
