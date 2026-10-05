@@ -154,7 +154,7 @@ export default function CheckoutModal({
       });
 
       const orderData = res.data;
-      setOrderResult(orderData);
+      setOrderResult(orderData); 
 
       // ========================================================
       // DISPARA A NOTIFICAÇÃO GLOBAL NO SISTEMA
