@@ -60,12 +60,24 @@ const formatOrderCode = (id: number, dateStr: string) => {
   return `PED-${year}-${String(id).padStart(4, "0")}`;
 };
 
-// Utilitário para resolver a URL completa vinda do backend
+// Utilitário para resolver a URL completa e remover referências antigas a localhost
 const getFullImageUrl = (path?: string | null) => {
   if (!path) return null;
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_URL}${cleanPath}`;
+
+  let cleanPath = path;
+
+  // Remove qualquer prefixo legado apontando para portas locais
+  if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
+    cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
+  }
+
+  // Se for endereço absoluto externo legítimo
+  if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+    return cleanPath;
+  }
+
+  const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+  return `${API_URL}${formatted}`;
 };
 
 function AdminDashboardContent() {
@@ -172,7 +184,18 @@ function AdminDashboardContent() {
 
     if (storedStore) {
       try {
-        setStore(JSON.parse(storedStore));
+        const parsedStore = JSON.parse(storedStore);
+        setStore(parsedStore);
+
+        // Atualiza a loja via API para sanear valores legados do localStorage
+        api.get(`/api/stores/${parsedStore.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then((res) => {
+          if (res.data) {
+            setStore(res.data);
+            localStorage.setItem("store", JSON.stringify(res.data));
+          }
+        }).catch(() => {});
       } catch (e) {}
     }
     setAuthLoading(false);
@@ -633,7 +656,7 @@ function AdminDashboardContent() {
               <button
                 type="button"
                 onClick={() => {
-                  setIsNotifOpen(!isNotifOpen);
+                  setIsNotifOpen((prev) => !prev);
                   setIsProfileOpen(false);
                 }}
                 className="relative p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-2xs"
@@ -706,7 +729,7 @@ function AdminDashboardContent() {
               <button
                 type="button"
                 onClick={() => {
-                  setIsProfileOpen(!isProfileOpen);
+                  setIsProfileOpen((prev) => !prev);
                   setIsNotifOpen(false);
                 }}
                 className="flex items-center gap-1.5 p-1 pl-1.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs"
@@ -720,7 +743,7 @@ function AdminDashboardContent() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    currentUser?.name?.charAt(0).toUpperCase() || "U"
+                    <span>{currentUser?.name?.charAt(0).toUpperCase() || "U"}</span>
                   )}
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
@@ -738,7 +761,7 @@ function AdminDashboardContent() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        currentUser?.name?.charAt(0).toUpperCase() || "U"
+                        <span>{currentUser?.name?.charAt(0).toUpperCase() || "U"}</span>
                       )}
                     </div>
                     <div className="overflow-hidden leading-tight">
