@@ -1,5 +1,4 @@
-import express from 'express';
-import cors from 'cors';
+import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import routes from './routes';
@@ -10,15 +9,23 @@ const PORT = process.env.PORT || 3333;
 
 app.set('trust proxy', 1);
 
-// Middleware CORS oficial: responde automaticamente ao preflight OPTIONS e reflete o domínio da Vercel
-app.use(
-  cors({
-    origin: (origin, callback) => callback(null, true),
-    credentials: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  })
-);
+// CORS MANUAL DEFINITIVO (Blindado contra proxies do Railway)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin || '*';
+
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+  // CRÍTICO: Responder com 200 OK e um pequeno corpo de texto.
+  // Isto força o proxy do Railway a manter os cabeçalhos intactos.
+  if (req.method === 'OPTIONS') {
+    return res.status(200).send('OK');
+  }
+
+  next();
+});
 
 app.use(express.json());
 
