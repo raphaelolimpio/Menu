@@ -42,9 +42,22 @@ import {
 // Função para formatar a URL completa da imagem vinda do backend
 const getFullImageUrl = (path?: string | null) => {
   if (!path) return null;
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_URL}${cleanPath}`;
+
+  let cleanPath = path;
+
+  // Se o caminho guardado no banco contiver localhost ou 127.0.0.1, removemos a parte local
+  if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
+    cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
+  }
+
+  // Se for uma URL externa válida (ex: Cloudinary, S3, etc.), mantém
+  if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+    return cleanPath;
+  }
+
+  // Adiciona a barra inicial se necessário e prefixa com a URL do backend de produção
+  const formattedPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+  return `${API_URL}${formattedPath}`;
 };
 
 export default function ProfileAndTeamPage() {
