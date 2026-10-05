@@ -60,6 +60,14 @@ const formatOrderCode = (id: number, dateStr: string) => {
   return `PED-${year}-${String(id).padStart(4, "0")}`;
 };
 
+// Utilitário para resolver a URL completa vinda do backend
+const getFullImageUrl = (path?: string | null) => {
+  if (!path) return null;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_URL}${cleanPath}`;
+};
+
 function AdminDashboardContent() {
   const router = useRouter();
   const { cart } = useCart();
@@ -89,6 +97,10 @@ function AdminDashboardContent() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  // Estados de erro para as imagens
+  const [logoError, setLogoError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -154,7 +166,10 @@ function AdminDashboardContent() {
       return;
     }
 
-    setCurrentUser(JSON.parse(userData));
+    try {
+      setCurrentUser(JSON.parse(userData));
+    } catch {}
+
     if (storedStore) {
       try {
         setStore(JSON.parse(storedStore));
@@ -444,6 +459,9 @@ function AdminDashboardContent() {
     }
   };
 
+  const storeLogoSrc = getFullImageUrl(store?.logoUrl);
+  const userAvatarSrc = getFullImageUrl(currentUser?.avatarUrl);
+
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
       {isSidebarOpen && (
@@ -529,10 +547,15 @@ function AdminDashboardContent() {
         <div className="p-4 border-t border-slate-900 bg-slate-950/70">
           <div className="flex items-center gap-3 px-1 mb-3">
             <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs overflow-hidden">
-              {currentUser?.avatarUrl ? (
-                <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              {userAvatarSrc && !avatarError ? (
+                <img
+                  src={userAvatarSrc}
+                  alt=""
+                  onError={() => setAvatarError(true)}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                currentUser?.name?.charAt(0) || "U"
+                currentUser?.name?.charAt(0).toUpperCase() || "U"
               )}
             </div>
             <div className="flex-1 overflow-hidden leading-tight">
@@ -562,11 +585,13 @@ function AdminDashboardContent() {
               <Menu className="w-5 h-5" />
             </button>
 
+            {/* Logo da Loja com Fallback em Texto */}
             <div className="flex items-center gap-2">
-              {store?.logoUrl ? (
+              {storeLogoSrc && !logoError ? (
                 <img
-                  src={store.logoUrl}
-                  alt={store.name || "Logo"}
+                  src={storeLogoSrc}
+                  alt=""
+                  onError={() => setLogoError(true)}
                   className="h-8 max-w-[140px] sm:max-w-[170px] object-contain rounded-md"
                 />
               ) : (
@@ -621,7 +646,7 @@ function AdminDashboardContent() {
               </button>
 
               {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200/90 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                   <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
@@ -645,25 +670,32 @@ function AdminDashboardContent() {
                   </div>
 
                   <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                    {notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`p-3.5 flex gap-3 transition-colors ${
-                          n.read ? "bg-white" : "bg-emerald-50/20"
-                        }`}
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                            n.read ? "bg-slate-300" : "bg-emerald-500"
-                          }`}
-                        />
-                        <div className="flex-1">
-                          <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
-                          <span className="text-[9px] font-mono text-slate-400 mt-1 block">{n.time}</span>
-                        </div>
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400">
+                        <Bell className="w-6 h-6 mx-auto mb-2 opacity-30 text-slate-400" />
+                        <p className="text-xs font-semibold">Nenhuma notificação no momento.</p>
                       </div>
-                    ))}
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`p-3.5 flex gap-3 transition-colors ${
+                            n.read ? "bg-white" : "bg-emerald-50/20"
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                              n.read ? "bg-slate-300" : "bg-emerald-500"
+                            }`}
+                          />
+                          <div className="flex-1">
+                            <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
+                            <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
+                            <span className="text-[9px] font-mono text-slate-400 mt-1 block">{n.time}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -680,8 +712,13 @@ function AdminDashboardContent() {
                 className="flex items-center gap-1.5 p-1 pl-1.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs overflow-hidden">
-                  {currentUser?.avatarUrl ? (
-                    <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  {userAvatarSrc && !avatarError ? (
+                    <img
+                      src={userAvatarSrc}
+                      alt=""
+                      onError={() => setAvatarError(true)}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     currentUser?.name?.charAt(0).toUpperCase() || "U"
                   )}
@@ -693,8 +730,13 @@ function AdminDashboardContent() {
                 <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                   <div className="p-4 bg-slate-50/80 border-b border-slate-100 flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white font-bold text-sm shadow-inner shrink-0 overflow-hidden">
-                      {currentUser?.avatarUrl ? (
-                        <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      {userAvatarSrc && !avatarError ? (
+                        <img
+                          src={userAvatarSrc}
+                          alt=""
+                          onError={() => setAvatarError(true)}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         currentUser?.name?.charAt(0).toUpperCase() || "U"
                       )}

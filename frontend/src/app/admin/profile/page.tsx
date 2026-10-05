@@ -39,6 +39,14 @@ import {
   UserX,
 } from "lucide-react";
 
+// Função para formatar a URL completa da imagem vinda do backend
+const getFullImageUrl = (path?: string | null) => {
+  if (!path) return null;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_URL}${cleanPath}`;
+};
+
 export default function ProfileAndTeamPage() {
   const router = useRouter();
   const { cart } = useCart();
@@ -66,6 +74,11 @@ export default function ProfileAndTeamPage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
+  // Estados para controle de erro no carregamento das imagens
+  const [logoError, setLogoError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const [profileAvatarError, setProfileAvatarError] = useState(false);
+
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -81,7 +94,7 @@ export default function ProfileAndTeamPage() {
 
     try {
       setUser(JSON.parse(storedUser));
-    } catch { }
+    } catch {}
 
     if (storedStore) {
       try {
@@ -199,9 +212,10 @@ export default function ProfileAndTeamPage() {
   };
 
   const markAllNotificationsAsRead = () => {
-    const updated = notifications.map((n) => ({ ...n, read: true }));
-    setNotifications(updated);
-    localStorage.setItem("system_notifications", JSON.stringify(updated));
+    const allIds = notifications.map((n) => n.id);
+    const storageKey = store?.id ? `read_notifications_${store.id}` : "read_notifications_ids";
+    localStorage.setItem(storageKey, JSON.stringify(allIds));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     window.dispatchEvent(new Event("notifications-updated"));
   };
 
@@ -255,6 +269,8 @@ export default function ProfileAndTeamPage() {
         const updatedUser = { ...user, avatarUrl: imageUrl };
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
+        setAvatarError(false);
+        setProfileAvatarError(false);
         window.dispatchEvent(new Event("storage-updated"));
         alert("Foto de perfil atualizada!");
       } else {
@@ -264,6 +280,7 @@ export default function ProfileAndTeamPage() {
         const updatedStore = { ...store, logoUrl: imageUrl };
         localStorage.setItem("store", JSON.stringify(updatedStore));
         setStore(updatedStore);
+        setLogoError(false);
         window.dispatchEvent(new Event("storage-updated"));
         alert("Logomarca atualizada!");
       }
@@ -337,6 +354,9 @@ export default function ProfileAndTeamPage() {
     );
   }
 
+  const storeLogoSrc = getFullImageUrl(store?.logoUrl);
+  const userAvatarSrc = getFullImageUrl(user?.avatarUrl);
+
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
       {isSidebarOpen && (
@@ -348,8 +368,9 @@ export default function ProfileAndTeamPage() {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
+        className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           <div className="h-20 flex items-center justify-between px-6 border-b border-slate-900 bg-slate-950">
@@ -406,10 +427,15 @@ export default function ProfileAndTeamPage() {
         <div className="p-4 border-t border-slate-900 bg-slate-950/70">
           <div className="flex items-center gap-3 px-1 mb-3">
             <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs overflow-hidden">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              {userAvatarSrc && !avatarError ? (
+                <img
+                  src={userAvatarSrc}
+                  alt=""
+                  onError={() => setAvatarError(true)}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                user?.name?.charAt(0) || "U"
+                user?.name?.charAt(0).toUpperCase() || "U"
               )}
             </div>
             <div className="flex-1 overflow-hidden leading-tight">
@@ -441,10 +467,20 @@ export default function ProfileAndTeamPage() {
               <Menu className="w-5 h-5" />
             </button>
 
+            {/* Logo da Loja com Fallback em Texto */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-slate-900 tracking-tight uppercase">
-                {store?.name || "Catálogo 3D"}
-              </span>
+              {storeLogoSrc && !logoError ? (
+                <img
+                  src={storeLogoSrc}
+                  alt=""
+                  onError={() => setLogoError(true)}
+                  className="h-8 max-w-[140px] sm:max-w-[170px] object-contain rounded-md"
+                />
+              ) : (
+                <span className="text-xs font-black text-slate-900 tracking-tight uppercase">
+                  {store?.name || "Catálogo 3D"}
+                </span>
+              )}
             </div>
           </div>
 
@@ -477,7 +513,7 @@ export default function ProfileAndTeamPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setIsNotifOpen(!isNotifOpen);
+                  setIsNotifOpen((prev) => !prev);
                   setIsProfileOpen(false);
                 }}
                 className="relative p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-2xs"
@@ -490,7 +526,7 @@ export default function ProfileAndTeamPage() {
               </button>
 
               {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200/90 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                   <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
@@ -515,17 +551,22 @@ export default function ProfileAndTeamPage() {
 
                   <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <p className="p-6 text-center text-xs text-slate-400">Nenhuma notificação no momento.</p>
+                      <div className="p-8 text-center text-slate-400">
+                        <Bell className="w-6 h-6 mx-auto mb-2 opacity-30 text-slate-400" />
+                        <p className="text-xs font-semibold">Nenhuma notificação no momento.</p>
+                      </div>
                     ) : (
                       notifications.map((n) => (
                         <div
                           key={n.id}
-                          className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"
-                            }`}
+                          className={`p-3.5 flex gap-3 transition-colors ${
+                            n.read ? "bg-white" : "bg-emerald-50/20"
+                          }`}
                         >
                           <span
-                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                              n.read ? "bg-slate-300" : "bg-emerald-500"
+                            }`}
                           />
                           <div className="flex-1">
                             <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
@@ -540,21 +581,26 @@ export default function ProfileAndTeamPage() {
               )}
             </div>
 
-            {/* PERFIL AVATAR */}
+            {/* PERFIL AVATAR CABEÇALHO */}
             <div className="relative" ref={profileRef}>
               <button
                 type="button"
                 onClick={() => {
-                  setIsProfileOpen(!isProfileOpen);
+                  setIsProfileOpen((prev) => !prev);
                   setIsNotifOpen(false);
                 }}
                 className="flex items-center gap-1.5 p-1 pl-1.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs overflow-hidden">
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  {userAvatarSrc && !avatarError ? (
+                    <img
+                      src={userAvatarSrc}
+                      alt=""
+                      onError={() => setAvatarError(true)}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    user?.name?.charAt(0).toUpperCase() || "U"
+                    <span>{user?.name?.charAt(0).toUpperCase() || "U"}</span>
                   )}
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
@@ -564,10 +610,15 @@ export default function ProfileAndTeamPage() {
                 <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                   <div className="p-4 bg-slate-50/80 border-b border-slate-100 flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white font-bold text-sm shadow-inner shrink-0 overflow-hidden">
-                      {user?.avatarUrl ? (
-                        <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      {userAvatarSrc && !avatarError ? (
+                        <img
+                          src={userAvatarSrc}
+                          alt=""
+                          onError={() => setAvatarError(true)}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        user?.name?.charAt(0).toUpperCase() || "U"
+                        <span>{user?.name?.charAt(0).toUpperCase() || "U"}</span>
                       )}
                     </div>
                     <div className="overflow-hidden leading-tight">
@@ -658,8 +709,13 @@ export default function ProfileAndTeamPage() {
             <div className="bg-slate-950 text-white rounded-2xl p-6 shadow-xs border border-slate-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex items-center gap-5">
                 <div className="relative w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 shrink-0 flex items-center justify-center overflow-hidden group shadow-inner">
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  {userAvatarSrc && !profileAvatarError ? (
+                    <img
+                      src={userAvatarSrc}
+                      alt=""
+                      onError={() => setProfileAvatarError(true)}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <UserCircle className="w-10 h-10 text-slate-600" />
                   )}
@@ -791,109 +847,113 @@ export default function ProfileAndTeamPage() {
                         </p>
                       </div>
                     ) : (
-                      filteredTeam.map((member) => (
-                        <div
-                          key={member.id}
-                          className="p-5 flex flex-col lg:flex-row justify-between lg:items-center gap-4 hover:bg-slate-50/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3.5">
-                            <div className="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-700 text-xs shrink-0 overflow-hidden shadow-2xs">
-                              {member.avatarUrl ? (
-                                <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
-                              ) : (
-                                member.name?.charAt(0) || "V"
-                              )}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-black text-slate-900">{member.name}</h4>
-                                <span
-                                  className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${member.status === "ACTIVE"
-                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                      : "bg-amber-50 text-amber-700 border-amber-200"
-                                    }`}
-                                >
-                                  {member.status === "ACTIVE" ? "ATIVO" : "PENDENTE"}
-                                </span>
+                      filteredTeam.map((member) => {
+                        const memberAvatarSrc = getFullImageUrl(member.avatarUrl);
+                        return (
+                          <div
+                            key={member.id}
+                            className="p-5 flex flex-col lg:flex-row justify-between lg:items-center gap-4 hover:bg-slate-50/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3.5">
+                              <div className="w-11 h-11 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-700 text-xs shrink-0 overflow-hidden shadow-2xs">
+                                {memberAvatarSrc ? (
+                                  <img src={memberAvatarSrc} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  member.name?.charAt(0).toUpperCase() || "V"
+                                )}
                               </div>
-                              <p className="text-xs text-slate-400 mt-0.5 font-medium">{member.email}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
-                              <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">Comissão:</span>
-                              <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                defaultValue={member.commissionPercent || 0}
-                                onBlur={(e) => {
-                                  const val = parseFloat(e.target.value) || 0;
-                                  if (val !== member.commissionPercent) {
-                                    handleUpdateSeller(member.id, member.status, val, member.maxDiscountPercent);
-                                  }
-                                }}
-                                className="w-12 text-xs font-black text-slate-900 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-center focus:outline-emerald-500"
-                              />
-                              <span className="text-xs font-bold text-slate-400">%</span>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-sm font-black text-slate-900">{member.name}</h4>
+                                  <span
+                                    className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                                      member.status === "ACTIVE"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : "bg-amber-50 text-amber-700 border-amber-200"
+                                    }`}
+                                  >
+                                    {member.status === "ACTIVE" ? "ATIVO" : "PENDENTE"}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-0.5 font-medium">{member.email}</p>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
-                              <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">Desc. Máx:</span>
-                              <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                defaultValue={member.maxDiscountPercent || 0}
-                                onBlur={(e) => {
-                                  const val = parseFloat(e.target.value) || 0;
-                                  if (val !== member.maxDiscountPercent) {
-                                    handleUpdateSeller(member.id, member.status, member.commissionPercent, val);
-                                  }
-                                }}
-                                className="w-12 text-xs font-black text-slate-900 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-center focus:outline-emerald-500"
-                              />
-                              <span className="text-xs font-bold text-slate-400">%</span>
-                            </div>
+                            <div className="flex items-center gap-4 flex-wrap">
+                              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">Comissão:</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  defaultValue={member.commissionPercent || 0}
+                                  onBlur={(e) => {
+                                    const val = parseFloat(e.target.value) || 0;
+                                    if (val !== member.commissionPercent) {
+                                      handleUpdateSeller(member.id, member.status, val, member.maxDiscountPercent);
+                                    }
+                                  }}
+                                  className="w-12 text-xs font-black text-slate-900 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-center focus:outline-emerald-500"
+                                />
+                                <span className="text-xs font-bold text-slate-400">%</span>
+                              </div>
 
-                            <div className="flex items-center gap-2">
-                              {(member.status === "PENDING" || member.status === "PENDING_APPROVAL") && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateSeller(member.id, "ACTIVE")}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors shadow-2xs flex items-center gap-1.5"
-                                >
-                                  <UserCheck className="w-3.5 h-3.5" />
-                                  <span>Aprovar</span>
-                                </button>
-                              )}
+                              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase font-mono">Desc. Máx:</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  defaultValue={member.maxDiscountPercent || 0}
+                                  onBlur={(e) => {
+                                    const val = parseFloat(e.target.value) || 0;
+                                    if (val !== member.maxDiscountPercent) {
+                                      handleUpdateSeller(member.id, member.status, member.commissionPercent, val);
+                                    }
+                                  }}
+                                  className="w-12 text-xs font-black text-slate-900 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-center focus:outline-emerald-500"
+                                />
+                                <span className="text-xs font-bold text-slate-400">%</span>
+                              </div>
 
-                              {member.status === "ACTIVE" ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateSeller(member.id, "INACTIVE")}
-                                  className="bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
-                                >
-                                  <UserX className="w-3.5 h-3.5" />
-                                  <span>Desativar</span>
-                                </button>
-                              ) : (
-                                member.status === "INACTIVE" && (
+                              <div className="flex items-center gap-2">
+                                {(member.status === "PENDING" || member.status === "PENDING_APPROVAL") && (
                                   <button
                                     type="button"
                                     onClick={() => handleUpdateSeller(member.id, "ACTIVE")}
-                                    className="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors shadow-2xs flex items-center gap-1.5"
                                   >
                                     <UserCheck className="w-3.5 h-3.5" />
-                                    <span>Reativar</span>
+                                    <span>Aprovar</span>
                                   </button>
-                                )
-                              )}
+                                )}
+
+                                {member.status === "ACTIVE" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateSeller(member.id, "INACTIVE")}
+                                    className="bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
+                                  >
+                                    <UserX className="w-3.5 h-3.5" />
+                                    <span>Desativar</span>
+                                  </button>
+                                ) : (
+                                  member.status === "INACTIVE" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateSeller(member.id, "ACTIVE")}
+                                      className="bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
+                                    >
+                                      <UserCheck className="w-3.5 h-3.5" />
+                                      <span>Reativar</span>
+                                    </button>
+                                  )
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
@@ -937,8 +997,8 @@ export default function ProfileAndTeamPage() {
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                 <div className="w-32 h-16 bg-white border border-slate-200 rounded-xl flex items-center justify-center overflow-hidden shrink-0 p-1 shadow-2xs">
-                  {store?.logoUrl ? (
-                    <img src={store.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                  {storeLogoSrc ? (
+                    <img src={storeLogoSrc} alt="" className="max-w-full max-h-full object-contain" />
                   ) : (
                     <StoreIcon className="w-6 h-6 text-slate-300" />
                   )}
