@@ -101,18 +101,23 @@ export default function ProfileAndTeamPage() {
   }, [router]);
 
   useEffect(() => {
-    const loadStoredNotifs = () => {
-      const stored = localStorage.getItem("system_notifications");
-      if (stored) {
-        try {
-          setNotifications(JSON.parse(stored));
-        } catch {}
+  const loadStoredNotifs = () => {
+    const stored = localStorage.getItem("system_notifications");
+    if (stored) {
+      try {
+        setNotifications(JSON.parse(stored));
+      } catch {
+        setNotifications([]);
       }
-    };
-    loadStoredNotifs();
-    window.addEventListener("notifications-updated", loadStoredNotifs);
-    return () => window.removeEventListener("notifications-updated", loadStoredNotifs);
-  }, []);
+    } else {
+      setNotifications([]);
+    }
+  };
+
+  loadStoredNotifs();
+  window.addEventListener("notifications-updated", loadStoredNotifs);
+  return () => window.removeEventListener("notifications-updated", loadStoredNotifs);
+}, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
