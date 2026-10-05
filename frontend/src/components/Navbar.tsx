@@ -15,7 +15,7 @@ export default function Navbar() {
     setMounted(true);
   }, []);
 
-  // 1. Define as rotas onde a Navbar Global NÃO deve aparecer
+  // Rotas onde a Navbar Global NÃO deve aparecer para não estragar o design
   const hiddenRoutes = [
     "/admin",
     "/login",
@@ -28,12 +28,12 @@ export default function Navbar() {
 
   const isHidden = hiddenRoutes.some((route) => pathname?.startsWith(route));
 
-  // 2. Se estiver na raiz "/" (Landing Page/Vitrine) ou nas rotas acima, a Navbar desaparece
+  // Se estiver na raiz "/" (Vitrine) ou numa das rotas ocultas, a Navbar desaparece!
   if (pathname === "/" || isHidden) {
     return null;
   }
 
-  // 3. Renderiza a Navbar apenas no Catálogo Público (ex: /products) e Carrinho (/cart)
+  // Navbar minimalista apenas para quem estiver a navegar pelo catálogo ou carrinho
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -45,17 +45,10 @@ export default function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-5">
-          <Link 
-            href="/" 
-            className="text-xs font-bold text-slate-600 hover:text-emerald-600 transition-colors"
-          >
+          <Link href="/" className="text-xs font-bold text-slate-600 hover:text-emerald-600 transition-colors">
             Início
           </Link>
-
-          <Link 
-            href="/cart" 
-            className="relative p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all shadow-sm"
-          >
+          <Link href="/cart" className="relative p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all shadow-sm">
             <ShoppingCart className="w-4 h-4" />
             {mounted && cart.length > 0 && (
               <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm border-2 border-white">
