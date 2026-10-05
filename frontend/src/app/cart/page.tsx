@@ -35,6 +35,19 @@ import CheckoutModal from "@/components/CheckoutModal";
 import api, { API_URL } from "@/services/api";
 
 export default function CartPage() {
+  const getFullImageUrl = (path?: string | null) => {
+    if (!path) return null;
+    let cleanPath = path;
+    if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
+      cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
+    }
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+    const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+    return `${API_URL}${formatted}`;
+  };
+
   const router = useRouter();
   const { cart, removeFromCart, removeByProduct, clearCart } = useCart();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -56,18 +69,13 @@ export default function CartPage() {
   const isStoreStaff = Boolean(
     currentUser && ["OWNER", "SELLER", "ADMIN"].includes(currentUser?.role)
   );
-  const getFullImageUrl = (path?: string | null) => {
-    if (!path) return null;
-    let cleanPath = path;
-    if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
-      cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
-    }
-    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
-      return cleanPath;
-    }
-    const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
-    return `${API_URL}${formatted}`;
-  };
+  const [logoError, setLogoError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
+  const storeLogoSrc = getFullImageUrl(store?.logoUrl);
+  const userAvatarSrc = getFullImageUrl(currentUser?.avatarUrl);
+  // Adicione esta função no topo do ficheiro (junto aos utilitários)
+
 
   // Sincroniza dados atualizados do utilizador e da loja na nuvem
   useEffect(() => {
@@ -367,7 +375,6 @@ export default function CartPage() {
         <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-20 shrink-0 shadow-2xs">
 
           <div className="flex items-center gap-3">
-            {/* O botão hambúrguer só aparece se a barra lateral existir */}
             {isStoreStaff && (
               <button
                 onClick={() => setIsSidebarOpen(true)}
@@ -378,10 +385,11 @@ export default function CartPage() {
             )}
 
             <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-              {store?.logoUrl ? (
+              {storeLogoSrc && !logoError ? (
                 <img
-                  src={store.logoUrl}
-                  alt={store.name || "Logo"}
+                  src={storeLogoSrc}
+                  alt=""
+                  onError={() => setLogoError(true)}
                   className="h-8 max-w-[140px] sm:max-w-[170px] object-contain rounded-md"
                 />
               ) : (
@@ -512,8 +520,13 @@ export default function CartPage() {
                     className="flex items-center gap-1.5 p-1 pl-1.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs"
                   >
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs overflow-hidden">
-                      {currentUser?.avatarUrl ? (
-                        <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      {userAvatarSrc && !avatarError ? (
+                        <img
+                          src={userAvatarSrc}
+                          alt=""
+                          onError={() => setAvatarError(true)}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         currentUser?.name?.charAt(0).toUpperCase() || "U"
                       )}
