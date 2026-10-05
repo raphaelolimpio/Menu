@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useCart, CartVariation } from "@/context/CartContext";
 import CheckoutModal from "@/components/CheckoutModal";
+import api, { API_URL } from "@/services/api";
 
 export default function CartPage() {
   const router = useRouter();
@@ -44,36 +45,73 @@ export default function CartPage() {
   const [store, setStore] = useState<any>(null);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
 
-  // Estados dos Pop-ups do Header
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Notificações isoladas por loja
   const [notifications, setNotifications] = useState<any[]>([]);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Validação se o utilizador pertence à equipa da loja (Lojista / Vendedor)
   const isStoreStaff = Boolean(
     currentUser && ["OWNER", "SELLER", "ADMIN"].includes(currentUser?.role)
   );
+  const getFullImageUrl = (path?: string | null) => {
+    if (!path) return null;
+    let cleanPath = path;
+    if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
+      cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
+    }
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+    const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+    return `${API_URL}${formatted}`;
+  };
 
-  // Sincroniza dados do utilizador e da loja guardados localmente
+  // Sincroniza dados atualizados do utilizador e da loja na nuvem
   useEffect(() => {
-    const loadUserData = () => {
+    const loadUserData = async () => {
+      const token = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
       const storedStore = localStorage.getItem("store");
 
       if (storedUser) {
         try {
-          setCurrentUser(JSON.parse(storedUser));
-        } catch {}
+          const parsedUser = JSON.parse(storedUser);
+          setCurrentUser(parsedUser);
+
+          // Busca atualizada do utilizador (Avatar fresco)
+          if (token && parsedUser?.id) {
+            api.get(`/api/users/${parsedUser.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then((res) => {
+              if (res.data) {
+                setCurrentUser(res.data);
+                localStorage.setItem("user", JSON.stringify(res.data));
+              }
+            }).catch(() => { });
+          }
+        } catch { }
       }
+
       if (storedStore) {
         try {
-          setStore(JSON.parse(storedStore));
-        } catch {}
+          const parsedStore = JSON.parse(storedStore);
+          setStore(parsedStore);
+
+          // Busca atualizada da loja (Logomarca fresca)
+          if (token && parsedStore?.id) {
+            api.get(`/api/stores/${parsedStore.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then((res) => {
+              if (res.data) {
+                setStore(res.data);
+                localStorage.setItem("store", JSON.stringify(res.data));
+              }
+            }).catch(() => { });
+          }
+        } catch { }
       }
     };
 
@@ -82,7 +120,6 @@ export default function CartPage() {
     return () => window.removeEventListener("storage-updated", loadUserData);
   }, []);
 
-  // Sincroniza notificações apenas para a equipa da loja
   useEffect(() => {
     if (!isStoreStaff || !currentUser?.storeId) {
       setNotifications([]);
@@ -113,14 +150,12 @@ export default function CartPage() {
     };
   }, [isStoreStaff, currentUser?.storeId]);
 
-  // Seleciona automaticamente todas as variações ao carregar
   useEffect(() => {
     if (cart.length > 0) {
       setSelectedIds(cart.map((i) => i.id));
     }
   }, [cart.length]);
 
-  // Fechar menus flutuantes ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -238,9 +273,8 @@ export default function CartPage() {
       {/* SIDEBAR LATERAL ERP: Exclusiva para funcionários autenticados */}
       {isStoreStaff && (
         <aside
-          className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
+          className={`fixed lg:static top-0 left-0 h-full w-64 bg-slate-950 text-slate-300 z-50 flex flex-col justify-between shrink-0 transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+            }`}
         >
           <div className="flex flex-col flex-1 overflow-y-auto">
             <div className="h-20 flex items-center justify-between px-6 border-b border-slate-900 bg-slate-950">
@@ -300,10 +334,12 @@ export default function CartPage() {
           <div className="p-4 border-t border-slate-900 bg-slate-950/70">
             <div className="flex items-center gap-3 px-1 mb-3">
               <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs overflow-hidden">
-                {currentUser?.avatarUrl ? (
-                  <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                {store?.logoUrl ? (
+                  <img src={getFullImageUrl(store.logoUrl) || ""} alt="" className="h-8 max-w-[140px] sm:max-w-[170px] object-contain rounded-md" />
                 ) : (
-                  currentUser?.name?.charAt(0) || "U"
+                  <span className="text-xs font-black text-slate-900 tracking-tight uppercase">
+                    {store?.name || "Catálogo 3D"}
+                  </span>
                 )}
               </div>
               <div className="flex-1 overflow-hidden leading-tight">
@@ -326,10 +362,10 @@ export default function CartPage() {
 
       {/* PAINEL PRINCIPAL DE CONTEÚDO */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        
+
         {/* CABEÇALHO */}
         <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-20 shrink-0 shadow-2xs">
-          
+
           <div className="flex items-center gap-3">
             {/* O botão hambúrguer só aparece se a barra lateral existir */}
             {isStoreStaff && (
@@ -445,14 +481,12 @@ export default function CartPage() {
                           notifications.map((n) => (
                             <div
                               key={n.id}
-                              className={`p-3.5 flex gap-3 transition-colors ${
-                                n.read ? "bg-white" : "bg-emerald-50/20"
-                              }`}
+                              className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"
+                                }`}
                             >
                               <span
-                                className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                                  n.read ? "bg-slate-300" : "bg-emerald-500"
-                                }`}
+                                className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"
+                                  }`}
                               />
                               <div className="flex-1">
                                 <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
@@ -599,7 +633,7 @@ export default function CartPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 {/* Lista de Modelos */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex items-center justify-between">
@@ -666,9 +700,8 @@ export default function CartPage() {
                             return (
                               <div
                                 key={variation.id}
-                                className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
-                                  isSelected ? "bg-emerald-50/20" : ""
-                                }`}
+                                className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${isSelected ? "bg-emerald-50/20" : ""
+                                  }`}
                               >
                                 <div className="flex items-center gap-3.5">
                                   <button type="button" onClick={() => toggleSelectOne(variation.id)}>
