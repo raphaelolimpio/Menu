@@ -118,6 +118,13 @@ export default function ProfileAndTeamPage() {
         setStorePhone(parsedStore.phone || "");
         setStoreGreeting(parsedStore.greeting || "");
         loadTeam(parsedStore.id);
+
+        api.get(`/api/stores/${parsedStore.id}`).then((res) => {
+          if (res.data) {
+            setStore(res.data);
+            localStorage.setItem("store", JSON.stringify(res.data));
+          }
+        }).catch(() => {});
       } catch {
         setLoading(false);
       }

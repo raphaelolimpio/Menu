@@ -31,7 +31,7 @@ router.post('/', imageUpload.single('file'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'Nenhum ficheiro enviado.' });
     }
-    const fileUrl = `http://localhost:3333/images/${req.file.filename}`;
+    const fileUrl = `/images/${req.file.filename}`;
     return res.json({ url: fileUrl });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
