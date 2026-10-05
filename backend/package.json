@@ -4,9 +4,9 @@
   "description": "Backend para catálogo 3D interativo com pedidos e emissão de PDF",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "npx prisma generate && tsc",
-    "start": "node dist/server.js",
+    "build": "npx prisma generate && npx tsc",
+    "start": "npx prisma db push && node dist/server.js",
+    "dev": "ts-node-dev --transpile-only src/server.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
