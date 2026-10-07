@@ -24,6 +24,7 @@ export default function Navbar() {
     "/reset-password",
     "/linha-producao",
     "/producao",
+    "/produto",
     "/cart",
   ];
 
