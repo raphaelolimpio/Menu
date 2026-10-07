@@ -458,12 +458,11 @@ export default function ProductDetailPage() {
               title="Notificações da fábrica"
             >
               <Bell className="w-4 h-4" />
-              {/* O ternário garante que o 0 não é impresso e padroniza o design com o carrinho */}
               {unreadCount > 0 ? (
                 <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-2 border-white shadow-xs">
                   {unreadCount}
                 </span>
-              ) : null} 
+              ) : null}
             </button>
 
             {isNotifOpen && (
@@ -479,9 +478,7 @@ export default function ProductDetailPage() {
                       </span>
                     )}
                   </div>
-
-                  {/* Botões Dinâmicos: Marcar Lidas ou Limpar Histórico */}
-                  {unreadCount > 0 ? (
+                  {unreadCount > 0 && (
                     <button
                       type="button"
                       onClick={markAllNotificationsAsRead}
@@ -489,27 +486,14 @@ export default function ProductDetailPage() {
                     >
                       <CheckCheck className="w-3.5 h-3.5" /> Marcar lidas
                     </button>
-                  ) : notifications.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNotifications([]);
-                        localStorage.setItem("system_notifications", JSON.stringify([]));
-                        window.dispatchEvent(new Event("notifications-updated"));
-                      }}
-                      className="text-[11px] font-bold text-slate-500 hover:text-rose-600 hover:underline flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Limpar
-                    </button>
-                  ) : null}
+                  )}
                 </div>
 
                 <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                  {/* Estado de Lista Vazia */}
                   {notifications.length === 0 ? (
-                    <div className="p-8 flex flex-col items-center justify-center text-slate-400">
-                      <Bell className="w-8 h-8 mb-2 opacity-20" />
-                      <span className="text-xs font-bold">Sem notificações</span>
+                    <div className="p-8 text-center text-slate-400">
+                      <Bell className="w-6 h-6 mx-auto mb-2 opacity-30 text-slate-400" />
+                      <p className="text-xs font-semibold">Nenhuma notificação no momento.</p>
                     </div>
                   ) : (
                     notifications.map((n) => (
@@ -532,6 +516,7 @@ export default function ProductDetailPage() {
               </div>
             )}
           </div>
+          
           <div className="relative" ref={profileRef}>
             {currentUser ? (
               <button
