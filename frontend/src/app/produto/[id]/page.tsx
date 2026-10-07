@@ -463,7 +463,7 @@ export default function ProductDetailPage() {
                 <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-2 border-white shadow-xs">
                   {unreadCount}
                 </span>
-              ) : null}
+              ) : null} 
             </button>
 
             {isNotifOpen && (
