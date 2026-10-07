@@ -446,6 +446,7 @@ export default function ProductDetailPage() {
 
           <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
+          {/* Sino de Notificações Sincronizado */}
           <div className="relative" ref={notifRef}>
             <button
               type="button"
@@ -457,9 +458,12 @@ export default function ProductDetailPage() {
               title="Notificações da fábrica"
             >
               <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white ring-1 ring-rose-500" />
-              )}
+              {/* O ternário garante que o 0 não é impresso e padroniza o design com o carrinho */}
+              {unreadCount > 0 ? (
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-2 border-white shadow-xs">
+                  {unreadCount}
+                </span>
+              ) : null}
             </button>
 
             {isNotifOpen && (
