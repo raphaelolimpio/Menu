@@ -84,6 +84,18 @@ export default function ProductManagement() {
     }
     return "";
   };
+  const getFullModelUrl = (path?: string | null) => {
+  if (!path) return null;
+  let cleanPath = path;
+  if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
+    cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
+  }
+  if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+    return cleanPath;
+  }
+  const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+  return `${API_URL}${formatted}`;
+};
 
   const storeId = getStoreId();
 
@@ -290,7 +302,8 @@ export default function ProductManagement() {
     }
   };
 
-  const hasModelToInspect = !!file || !!existingModelUrl;
+  const cleanModelUrl = getFullModelUrl(existingModelUrl);
+  const hasModelToInspect = !!file || !!cleanModelUrl;
 
   const filteredProducts = products.filter((p) => {
     const term = searchTerm.toLowerCase();
@@ -520,7 +533,7 @@ export default function ProductManagement() {
                   <AdminModelInspector
                     ref={inspectorRef}
                     file={file}
-                    modelUrl={existingModelUrl}
+                    modelUrl={cleanModelUrl} // <--- Atualize esta linha
                     highlightedBodies={focusedBodies.length > 0 ? focusedBodies : selectedBodiesForGroup}
                     groupedBodies={groupedBodiesPreview}
                     onMeshClick={(clickedBody) => {
