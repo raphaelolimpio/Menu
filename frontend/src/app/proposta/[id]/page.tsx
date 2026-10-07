@@ -17,29 +17,6 @@ import {
   Sparkles
 } from "lucide-react";
 
-const DEFAULT_NOTIFICATIONS = [
-  {
-    id: "1",
-    title: "Nova Ordem de Produção",
-    desc: "Pedido aguardando corte no chão de fábrica.",
-    time: "Há 10 min",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Etapa de Manufatura Concluída",
-    desc: "Um lote foi concluído e está pronto para expedição.",
-    time: "Há 45 min",
-    read: false,
-  },
-  {
-    id: "3",
-    title: "Proposta Aprovada",
-    desc: "Cliente aprovou o orçamento 3D via link público.",
-    time: "Há 2 horas",
-    read: true,
-  },
-];
 
 export default function PropostaPublicaPage() {
   const { id } = useParams();
