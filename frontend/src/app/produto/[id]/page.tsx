@@ -112,6 +112,20 @@ export default function ProductDetailPage() {
     const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
     return `${API_URL}${formatted}`;
   };
+  const getFullImageUrl = (path?: string | null) => {
+    if (!path) return null;
+    let cleanPath = path;
+    if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
+      cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
+    }
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+    const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+    return `${API_URL}${formatted}`;
+  };
+  const [logoError, setLogoError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const parseGroups = (raw: any): CustomGroup[] => {
     if (!raw) return [];
@@ -350,33 +364,38 @@ export default function ProductDetailPage() {
       onClick={() => setActiveMenuId(null)}
     >
       {/* 1. CABEÇALHO SUPERIOR PADRONIZADO (ÚNICO E FULL-WIDTH) */}
-      <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-40 shadow-2xs">
-        {/* Lado Esquerdo: Logomarca da Empresa */}
-        <Link href="/" className="flex items-center gap-3">
-          {store?.logoUrl ? (
-            <img
-              src={store.logoUrl}
-              alt={store.name || "Logo"}
-              className="h-8 max-w-[160px] object-contain rounded-md"
-            />
-          ) : (
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
-                <Layers className="w-4 h-4" />
+      <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-20 shrink-0 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            {getFullImageUrl(store?.logoUrl) ? (
+              <img
+                src={getFullImageUrl(store.logoUrl) || ""}
+                alt={store?.name || "Logo"}
+                className="h-8 max-w-[140px] sm:max-w-[170px] object-contain rounded-md"
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <h1 className="text-xs font-black text-slate-900 tracking-tight uppercase leading-none">
+                    {store?.name || "Catálogo 3D"}
+                  </h1>
+                  <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase">
+                    Portal de Pedidos
+                  </span>
+                </div>
               </div>
-              <span className="text-sm font-black text-slate-900 tracking-tight uppercase">
-                {store?.name || "Catálogo 3D"}
-              </span>
-            </div>
-          )}
-        </Link>
+            )}
+          </Link>
+        </div>
 
-        {/* Lado Direito: Ações por Ícones, Notificações e Avatar */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Ícone: Abrir Catálogo */}
           <Link
             href="/"
-            title="Voltar ao Catálogo"
+            title="Voltar ao Catálogo 3D"
             className="p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-600 transition-colors shadow-2xs"
           >
             <Box className="w-4 h-4" />
@@ -416,7 +435,7 @@ export default function ProductDetailPage() {
             </button>
 
             {isNotifOpen && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200/90 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
@@ -443,13 +462,9 @@ export default function ProductDetailPage() {
                   {notifications.map((n) => (
                     <div
                       key={n.id}
-                      className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"
-                        }`}
+                      className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"}`}
                     >
-                      <span
-                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"
-                          }`}
-                      />
+                      <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"}`} />
                       <div className="flex-1">
                         <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
                         <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
@@ -474,10 +489,14 @@ export default function ProductDetailPage() {
                 className="flex items-center gap-1.5 p-1 pl-1.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs overflow-hidden">
-                  {currentUser?.avatarUrl ? (
-                    <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  {getFullImageUrl(currentUser?.avatarUrl) ? (
+                    <img 
+                      src={getFullImageUrl(currentUser.avatarUrl) || ""} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover" 
+                    />
                   ) : (
-                    currentUser?.name?.charAt(0).toUpperCase() || "U"
+                    <span>{currentUser?.name?.charAt(0).toUpperCase() || "U"}</span>
                   )}
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
@@ -495,10 +514,14 @@ export default function ProductDetailPage() {
               <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                 <div className="p-4 bg-slate-50/80 border-b border-slate-100 flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white font-bold text-sm shadow-inner shrink-0 overflow-hidden">
-                    {currentUser?.avatarUrl ? (
-                      <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    {getFullImageUrl(currentUser?.avatarUrl) ? (
+                      <img 
+                        src={getFullImageUrl(currentUser.avatarUrl) || ""} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
-                      currentUser?.name?.charAt(0).toUpperCase() || "U"
+                      <span>{currentUser?.name?.charAt(0).toUpperCase() || "U"}</span>
                     )}
                   </div>
                   <div className="overflow-hidden leading-tight">
@@ -656,8 +679,8 @@ export default function ProductDetailPage() {
                       type="button"
                       onClick={() => setFinish(f)}
                       className={`py-2.5 text-xs font-bold rounded-xl border transition-all capitalize ${finish === f
-                          ? "border-slate-900 bg-slate-900 text-white shadow-xs"
-                          : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        ? "border-slate-900 bg-slate-900 text-white shadow-xs"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
                         }`}
                     >
                       {f === "standard" ? "Padrão" : f === "matte" ? "Fosco / Textura" : "Brilhante"}
@@ -699,8 +722,8 @@ export default function ProductDetailPage() {
                               type="button"
                               onClick={() => handleColorChange(group.name, hex)}
                               className={`w-6 h-6 rounded-full border-2 transition-transform ${currentVal === hex
-                                  ? "border-slate-900 scale-125 shadow-xs ring-2 ring-emerald-500/40 ring-offset-1"
-                                  : "border-slate-300 hover:scale-110 opacity-80 hover:opacity-100"
+                                ? "border-slate-900 scale-125 shadow-xs ring-2 ring-emerald-500/40 ring-offset-1"
+                                : "border-slate-300 hover:scale-110 opacity-80 hover:opacity-100"
                                 }`}
                               style={{ backgroundColor: hex }}
                               title={hex}
@@ -785,8 +808,8 @@ export default function ProductDetailPage() {
                     <div
                       key={item.id}
                       className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${editingId === item.id
-                          ? "border-amber-500 bg-amber-50/50"
-                          : "border-slate-200/80 bg-white shadow-2xs"
+                        ? "border-amber-500 bg-amber-50/50"
+                        : "border-slate-200/80 bg-white shadow-2xs"
                         }`}
                     >
                       <div className="flex items-center gap-3">
