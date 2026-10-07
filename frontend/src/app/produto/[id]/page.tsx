@@ -157,9 +157,9 @@ export default function ProductDetailPage() {
                 setCurrentUser(res.data);
                 localStorage.setItem("user", JSON.stringify(res.data));
               }
-            }).catch(() => {});
+            }).catch(() => { });
           }
-        } catch {}
+        } catch { }
       }
 
       if (storedStore) {
@@ -175,9 +175,9 @@ export default function ProductDetailPage() {
                 setStore(res.data);
                 localStorage.setItem("store", JSON.stringify(res.data));
               }
-            }).catch(() => {});
+            }).catch(() => { });
           }
-        } catch {}
+        } catch { }
       }
     };
 
@@ -479,7 +479,9 @@ export default function ProductDetailPage() {
                       </span>
                     )}
                   </div>
-                  {unreadCount > 0 && (
+
+                  {/* Botões Dinâmicos: Marcar Lidas ou Limpar Histórico */}
+                  {unreadCount > 0 ? (
                     <button
                       type="button"
                       onClick={markAllNotificationsAsRead}
@@ -487,30 +489,49 @@ export default function ProductDetailPage() {
                     >
                       <CheckCheck className="w-3.5 h-3.5" /> Marcar lidas
                     </button>
-                  )}
+                  ) : notifications.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNotifications([]);
+                        localStorage.setItem("system_notifications", JSON.stringify([]));
+                        window.dispatchEvent(new Event("notifications-updated"));
+                      }}
+                      className="text-[11px] font-bold text-slate-500 hover:text-rose-600 hover:underline flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Limpar
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"}`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"}`}
-                      />
-                      <div className="flex-1">
-                        <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
-                        <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
-                        <span className="text-[9px] font-mono text-slate-400 mt-1 block">{n.time}</span>
-                      </div>
+                  {/* Estado de Lista Vazia */}
+                  {notifications.length === 0 ? (
+                    <div className="p-8 flex flex-col items-center justify-center text-slate-400">
+                      <Bell className="w-8 h-8 mb-2 opacity-20" />
+                      <span className="text-xs font-bold">Sem notificações</span>
                     </div>
-                  ))}
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"}`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"}`}
+                        />
+                        <div className="flex-1">
+                          <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
+                          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
+                          <span className="text-[9px] font-mono text-slate-400 mt-1 block">{n.time}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
           </div>
-
           <div className="relative" ref={profileRef}>
             {currentUser ? (
               <button
