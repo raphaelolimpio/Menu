@@ -91,6 +91,8 @@ export default function ProductDetailPage() {
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [store, setStore] = useState<any>(null);
+  const [logoError, setLogoError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -112,6 +114,7 @@ export default function ProductDetailPage() {
     const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
     return `${API_URL}${formatted}`;
   };
+
   const getFullImageUrl = (path?: string | null) => {
     if (!path) return null;
     let cleanPath = path;
@@ -124,8 +127,6 @@ export default function ProductDetailPage() {
     const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
     return `${API_URL}${formatted}`;
   };
-  const [logoError, setLogoError] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
 
   const parseGroups = (raw: any): CustomGroup[] => {
     if (!raw) return [];
@@ -138,15 +139,45 @@ export default function ProductDetailPage() {
   };
 
   useEffect(() => {
-    const loadUserData = () => {
+    const loadUserData = async () => {
+      const token = localStorage.getItem("token");
       const storedUser = localStorage.getItem("user");
       const storedStore = localStorage.getItem("store");
 
       if (storedUser) {
-        try { setCurrentUser(JSON.parse(storedUser)); } catch { }
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setCurrentUser(parsedUser);
+
+          if (token && parsedUser?.id) {
+            api.get(`/api/users/${parsedUser.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then((res) => {
+              if (res.data) {
+                setCurrentUser(res.data);
+                localStorage.setItem("user", JSON.stringify(res.data));
+              }
+            }).catch(() => {});
+          }
+        } catch {}
       }
+
       if (storedStore) {
-        try { setStore(JSON.parse(storedStore)); } catch { }
+        try {
+          const parsedStore = JSON.parse(storedStore);
+          setStore(parsedStore);
+
+          if (token && parsedStore?.id) {
+            api.get(`/api/stores/${parsedStore.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then((res) => {
+              if (res.data) {
+                setStore(res.data);
+                localStorage.setItem("store", JSON.stringify(res.data));
+              }
+            }).catch(() => {});
+          }
+        } catch {}
       }
     };
 
@@ -155,7 +186,6 @@ export default function ProductDetailPage() {
     return () => window.removeEventListener("storage-updated", loadUserData);
   }, []);
 
-  // Sincroniza notificações com localStorage
   useEffect(() => {
     const syncNotifications = () => {
       const stored = localStorage.getItem("system_notifications");
@@ -180,7 +210,6 @@ export default function ProductDetailPage() {
     };
   }, []);
 
-  // Fechar menus ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -357,20 +386,22 @@ export default function ProductDetailPage() {
 
   const groups = parseGroups(product.customizableParts);
   const cleanModelUrl = getFullModelUrl(product.model3dUrl);
+  const storeLogoSrc = getFullImageUrl(store?.logoUrl);
+  const userAvatarSrc = getFullImageUrl(currentUser?.avatarUrl);
 
   return (
     <div
       className="min-h-screen bg-slate-100 flex flex-col font-sans"
       onClick={() => setActiveMenuId(null)}
     >
-      {/* 1. CABEÇALHO SUPERIOR PADRONIZADO (ÚNICO E FULL-WIDTH) */}
       <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-20 shrink-0 shadow-2xs">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            {getFullImageUrl(store?.logoUrl) ? (
+            {storeLogoSrc && !logoError ? (
               <img
-                src={getFullImageUrl(store.logoUrl) || ""}
-                alt={store?.name || "Logo"}
+                src={storeLogoSrc}
+                alt=""
+                onError={() => setLogoError(true)}
                 className="h-8 max-w-[140px] sm:max-w-[170px] object-contain rounded-md"
               />
             ) : (
@@ -392,7 +423,6 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Ícone: Abrir Catálogo */}
           <Link
             href="/"
             title="Voltar ao Catálogo 3D"
@@ -401,7 +431,6 @@ export default function ProductDetailPage() {
             <Box className="w-4 h-4" />
           </Link>
 
-          {/* Ícone: Carrinho com Badge Dinâmico */}
           <Link
             href="/cart"
             title="Ver Carrinho de Compras"
@@ -417,7 +446,6 @@ export default function ProductDetailPage() {
 
           <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
-          {/* Sino de Notificações Sincronizado */}
           <div className="relative" ref={notifRef}>
             <button
               type="button"
@@ -435,7 +463,7 @@ export default function ProductDetailPage() {
             </button>
 
             {isNotifOpen && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200/90 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
@@ -464,7 +492,9 @@ export default function ProductDetailPage() {
                       key={n.id}
                       className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"}`}
                     >
-                      <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"}`} />
+                      <span
+                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"}`}
+                      />
                       <div className="flex-1">
                         <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
                         <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{n.desc}</p>
@@ -477,7 +507,6 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Avatar com Pop-up do Usuário */}
           <div className="relative" ref={profileRef}>
             {currentUser ? (
               <button
@@ -489,11 +518,12 @@ export default function ProductDetailPage() {
                 className="flex items-center gap-1.5 p-1 pl-1.5 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs overflow-hidden">
-                  {getFullImageUrl(currentUser?.avatarUrl) ? (
-                    <img 
-                      src={getFullImageUrl(currentUser.avatarUrl) || ""} 
-                      alt="Avatar" 
-                      className="w-full h-full object-cover" 
+                  {userAvatarSrc && !avatarError ? (
+                    <img
+                      src={userAvatarSrc}
+                      alt=""
+                      onError={() => setAvatarError(true)}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <span>{currentUser?.name?.charAt(0).toUpperCase() || "U"}</span>
@@ -514,11 +544,12 @@ export default function ProductDetailPage() {
               <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in-50 duration-150">
                 <div className="p-4 bg-slate-50/80 border-b border-slate-100 flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white font-bold text-sm shadow-inner shrink-0 overflow-hidden">
-                    {getFullImageUrl(currentUser?.avatarUrl) ? (
-                      <img 
-                        src={getFullImageUrl(currentUser.avatarUrl) || ""} 
-                        alt="Avatar" 
-                        className="w-full h-full object-cover" 
+                    {userAvatarSrc && !avatarError ? (
+                      <img
+                        src={userAvatarSrc}
+                        alt=""
+                        onError={() => setAvatarError(true)}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <span>{currentUser?.name?.charAt(0).toUpperCase() || "U"}</span>
@@ -571,13 +602,11 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
-          </div> 
-        </div>  
+          </div>
+        </div>
       </header>
 
-      {/* 2. ÁREA PRINCIPAL FULL-WIDTH (SEM SIDEBAR) */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Barra de Título do Produto */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -609,10 +638,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Grade: Viewport 3D à Esquerda e Painel de Cores à Direita */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-12">
-
-          {/* Lado Esquerdo: Visualizador 3D Amplo */}
           <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-24">
             <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs overflow-hidden">
               <div className="h-[460px] sm:h-[520px] w-full rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center">
@@ -633,7 +659,6 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Presets Rápidos de Cores */}
             <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                 <Sparkles className="w-4 h-4 text-amber-500" />
@@ -660,12 +685,8 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Lado Direito: Controles de Customização e Variações */}
           <div className="lg:col-span-5 space-y-6">
-
-            {/* Card de Configuração das Peças */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-6">
-              {/* Acabamento da Superfície */}
               <div>
                 <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-slate-800">
                   <Layers className="w-4 h-4 text-slate-600" />
@@ -689,7 +710,6 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Cores por Grupo */}
               <div className="space-y-4 border-t border-slate-100 pt-5">
                 <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-800">
                   <Palette className="w-4 h-4 text-emerald-600" />
@@ -736,7 +756,6 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Quantidade e Adicionar à Lista */}
               <div className="border-t border-slate-100 pt-5 flex items-center justify-between">
                 <div>
                   <label className="text-xs font-black uppercase tracking-wider text-slate-800 block">
@@ -787,7 +806,6 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Card das Variações Montadas */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
@@ -893,7 +911,6 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Botão de Envio para o Carrinho */}
               <button
                 type="button"
                 onClick={handlePushToCart}
@@ -904,7 +921,6 @@ export default function ProductDetailPage() {
                 Adicionar Variações ao Carrinho ({variations.length})
               </button>
             </div>
-
           </div>
         </div>
       </main>
