@@ -572,7 +572,7 @@ export default function ProductDetailPage() {
               </div>
             )}
           </div>
-        </div> 
+        </div>  
       </header>
 
       {/* 2. ÁREA PRINCIPAL FULL-WIDTH (SEM SIDEBAR) */}
