@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
 import dynamic from "next/dynamic";
 import api, { API_URL } from "@/services/api";
 import {

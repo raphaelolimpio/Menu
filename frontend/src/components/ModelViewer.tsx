@@ -9,9 +9,9 @@ export type FinishType = "standard" | "matte" | "glossy";
 
 interface ModelProps {
   url: string;
-  colors: Record<string, string>; // groupName -> colorHex
+  colors: Record<string, string>;
   finish: FinishType;
-  customizableParts: any; // array de grupos salvos
+  customizableParts: any; 
 }
 
 function Model({ url, colors, finish, customizableParts }: ModelProps) {
