@@ -92,15 +92,26 @@ export default function ProductDetailPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [store, setStore] = useState<any>(null);
 
-  // Estados dos Pop-ups do Header
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Notificações com Sincronização Global
   const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const getFullModelUrl = (path?: string | null) => {
+    if (!path) return null;
+    let cleanPath = path;
+    if (cleanPath.includes("localhost:3333") || cleanPath.includes("127.0.0.1:3333")) {
+      cleanPath = cleanPath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):3333/, "");
+    }
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+    const formatted = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+    return `${API_URL}${formatted}`;
+  };
 
   const parseGroups = (raw: any): CustomGroup[] => {
     if (!raw) return [];
@@ -118,10 +129,10 @@ export default function ProductDetailPage() {
       const storedStore = localStorage.getItem("store");
 
       if (storedUser) {
-        try { setCurrentUser(JSON.parse(storedUser)); } catch {}
+        try { setCurrentUser(JSON.parse(storedUser)); } catch { }
       }
       if (storedStore) {
-        try { setStore(JSON.parse(storedStore)); } catch {}
+        try { setStore(JSON.parse(storedStore)); } catch { }
       }
     };
 
@@ -274,11 +285,11 @@ export default function ProductDetailPage() {
       prev.map((v) =>
         v.id === editingId
           ? {
-              ...v,
-              quantity: quantity,
-              configuration: { ...selectedColors },
-              thumbnail: updatedThumb || v.thumbnail,
-            }
+            ...v,
+            quantity: quantity,
+            configuration: { ...selectedColors },
+            thumbnail: updatedThumb || v.thumbnail,
+          }
           : v
       )
     );
@@ -331,6 +342,7 @@ export default function ProductDetailPage() {
   }
 
   const groups = parseGroups(product.customizableParts);
+  const cleanModelUrl = getFullModelUrl(product.model3dUrl);
 
   return (
     <div
@@ -431,14 +443,12 @@ export default function ProductDetailPage() {
                   {notifications.map((n) => (
                     <div
                       key={n.id}
-                      className={`p-3.5 flex gap-3 transition-colors ${
-                        n.read ? "bg-white" : "bg-emerald-50/20"
-                      }`}
+                      className={`p-3.5 flex gap-3 transition-colors ${n.read ? "bg-white" : "bg-emerald-50/20"
+                        }`}
                     >
                       <span
-                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                          n.read ? "bg-slate-300" : "bg-emerald-500"
-                        }`}
+                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-slate-300" : "bg-emerald-500"
+                          }`}
                       />
                       <div className="flex-1">
                         <h4 className="text-xs font-bold text-slate-900 leading-snug">{n.title}</h4>
@@ -578,18 +588,25 @@ export default function ProductDetailPage() {
 
         {/* Grade: Viewport 3D à Esquerda e Painel de Cores à Direita */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-12">
-          
+
           {/* Lado Esquerdo: Visualizador 3D Amplo */}
           <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-24">
             <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs overflow-hidden">
               <div className="h-[460px] sm:h-[520px] w-full rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center">
-                <ModelViewer
-                  ref={viewerRef}
-                  modelUrl={product.model3dUrl}
-                  selectedColors={selectedColors}
-                  finish={finish}
-                  customizableParts={product.customizableParts}
-                />
+                {cleanModelUrl ? (
+                  <ModelViewer
+                    ref={viewerRef}
+                    modelUrl={cleanModelUrl}
+                    selectedColors={selectedColors}
+                    finish={finish}
+                    customizableParts={product.customizableParts}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-slate-500">
+                    <Box className="w-8 h-8 mb-2 opacity-50" />
+                    <span className="text-xs font-bold">Arquivo 3D indisponível</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -622,7 +639,7 @@ export default function ProductDetailPage() {
 
           {/* Lado Direito: Controles de Customização e Variações */}
           <div className="lg:col-span-5 space-y-6">
-            
+
             {/* Card de Configuração das Peças */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-6">
               {/* Acabamento da Superfície */}
@@ -638,11 +655,10 @@ export default function ProductDetailPage() {
                       key={f}
                       type="button"
                       onClick={() => setFinish(f)}
-                      className={`py-2.5 text-xs font-bold rounded-xl border transition-all capitalize ${
-                        finish === f
+                      className={`py-2.5 text-xs font-bold rounded-xl border transition-all capitalize ${finish === f
                           ? "border-slate-900 bg-slate-900 text-white shadow-xs"
                           : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
+                        }`}
                     >
                       {f === "standard" ? "Padrão" : f === "matte" ? "Fosco / Textura" : "Brilhante"}
                     </button>
@@ -682,11 +698,10 @@ export default function ProductDetailPage() {
                               key={hex}
                               type="button"
                               onClick={() => handleColorChange(group.name, hex)}
-                              className={`w-6 h-6 rounded-full border-2 transition-transform ${
-                                currentVal === hex
+                              className={`w-6 h-6 rounded-full border-2 transition-transform ${currentVal === hex
                                   ? "border-slate-900 scale-125 shadow-xs ring-2 ring-emerald-500/40 ring-offset-1"
                                   : "border-slate-300 hover:scale-110 opacity-80 hover:opacity-100"
-                              }`}
+                                }`}
                               style={{ backgroundColor: hex }}
                               title={hex}
                             />
@@ -769,11 +784,10 @@ export default function ProductDetailPage() {
                   {variations.map((item, idx) => (
                     <div
                       key={item.id}
-                      className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                        editingId === item.id
+                      className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${editingId === item.id
                           ? "border-amber-500 bg-amber-50/50"
                           : "border-slate-200/80 bg-white shadow-2xs"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         {item.thumbnail ? (
