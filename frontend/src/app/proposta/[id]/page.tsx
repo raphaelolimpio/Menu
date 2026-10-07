@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 
+
 export default function PropostaPublicaPage() {
   const { id } = useParams();
   const [order, setOrder] = useState<any>(null);
@@ -51,7 +52,7 @@ export default function PropostaPublicaPage() {
 
       try {
         const stored = localStorage.getItem("system_notifications");
-        let currentList = stored ? JSON.parse(stored) : DEFAULT_NOTIFICATIONS;
+        let currentList = stored ? JSON.parse(stored) : [];
         currentList = [newNotif, ...currentList.filter((n: any) => n.id !== newNotif.id)];
         localStorage.setItem("system_notifications", JSON.stringify(currentList));
         window.dispatchEvent(new Event("notifications-updated"));
